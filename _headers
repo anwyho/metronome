@@ -1,0 +1,22 @@
+# Cloudflare Pages headers.
+
+# A cached worker script is an app that can never update.
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+
+# The shell is what the worker diffs to detect a deploy, so it must not be
+# served stale by an intermediary.
+/index.html
+  Cache-Control: no-cache
+
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+# Content is stable for a given filename; the worker's own precache is what
+# actually invalidates these, via a version hash over every shipped byte.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=604800
