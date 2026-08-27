@@ -11,8 +11,8 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const SKIP_DIRS = new Set(['.git', 'tools', 'node_modules']);
-const SKIP_FILES = new Set(['sw.js', '_headers', '.gitignore', 'README.md', 'LICENSE']);
+const SKIP_DIRS = new Set(['.git', 'tools', 'node_modules', '_site']);
+const SKIP_FILES = new Set(['sw.js', '_headers', '.gitignore', 'README.md', 'LICENSE', 'wrangler.jsonc']);
 
 function walk(dir) {
   const out = [];
@@ -39,19 +39,35 @@ for (const f of files) {
   h.update(f);
   h.update(readFileSync(join(ROOT, f)));
 }
-const version = h.digest('hex').slice(0, 16);
+const build = h.digest('hex').slice(0, 12);
+
+const swPath = join(ROOT, 'sw.js');
+const sw = readFileSync(swPath, 'utf8');
+const prevBuild = (sw.match(/const BUILD = '([^']*)'/) || [])[1];
+const prevVersion = (sw.match(/const VERSION = '([^']*)'/) || [])[1];
+
+/* The timestamp is what a human reads; BUILD is what actually keys the cache.
+   Stamped only when the content hash moves, so re-running the build with
+   nothing changed neither bumps the version nor trips --check. Local time,
+   because the person reading it is the person who ran the build. */
+function stampedVersion() {
+  if (build === prevBuild) return prevVersion;
+  const d = new Date();
+  const p2 = (n) => String(n).padStart(2, '0');
+  return `${p2(d.getFullYear() % 100)}${p2(d.getMonth() + 1)}${p2(d.getDate())}`
+       + `.${p2(d.getHours())}${p2(d.getMinutes())}`;
+}
+const version = stampedVersion();
 
 const list = files.map((f) => `  '${f}',`).join('\n');
 const block = `/* @generated-begin */
 const VERSION = '${version}';
+const BUILD = '${build}';
 const PRECACHE = [
   './',
 ${list}
 ];
 /* @generated-end */`;
-
-const swPath = join(ROOT, 'sw.js');
-const sw = readFileSync(swPath, 'utf8');
 const next = sw.replace(/\/\* @generated-begin \*\/[\s\S]*?\/\* @generated-end \*\//, block);
 
 if (process.argv.includes('--check')) {
@@ -59,9 +75,9 @@ if (process.argv.includes('--check')) {
     console.error('sw.js is stale — run `node tools/build.mjs`');
     process.exit(1);
   }
-  console.log(`sw.js up to date (${files.length} precached, version ${version})`);
+  console.log(`sw.js up to date — version ${version}, build ${build}, ${files.length} precached`);
 } else {
   writeFileSync(swPath, next);
-  console.log(`sw.js updated: ${files.length} files precached, version ${version}`);
+  console.log(`sw.js updated — version ${version}, build ${build}, ${files.length} precached`);
   for (const f of files) console.log('  ' + f);
 }

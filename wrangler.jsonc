@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "metronome",
+  "compatibility_date": "2026-08-27",
+
+  // Assets-only Worker: no `main`, nothing to run per request. The build nests
+  // everything under metronome/ so asset paths match the route below.
+  "assets": {
+    "directory": "./_site",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+
+  // Scoped to the subpath, so a.aaanth.com/ stays free for anything else.
+  "routes": [
+    {
+      "pattern": "a.aaanth.com/metronome*",
+      "zone_name": "aaanth.com"
+    }
+  ]
+}

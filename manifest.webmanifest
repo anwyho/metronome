@@ -4,7 +4,6 @@
   "description": "A metronome with an accent grid, swing, subdivisions and tap tempo. Works offline.",
   "start_url": ".",
   "scope": ".",
-  "id": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5ead8",

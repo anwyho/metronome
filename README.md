@@ -8,6 +8,8 @@ Timing runs in an `AudioWorklet` — clicks are synthesised in the audio thread
 from a sample-accurate tick schedule, so tempo does not drift when the main
 thread is busy. There are no audio files to load.
 
+Deployed at **https://a.aaanth.com/metronome/**.
+
 ## Run it
 
 Any static file server works; the whole app is plain files.
@@ -18,20 +20,47 @@ python3 -m http.server 8000
 ```
 
 Service workers need `localhost` or HTTPS — `127.0.0.1` is fine, a `file://`
-URL is not.
+URL is not. To exercise the deployed path layout instead, run
+`bash tools/build-site.sh` and serve `_site/`, then open `/metronome/`.
 
 ## After changing any shipped file
 
-`sw.js` carries a generated precache list and a version hash over the contents
-of every file it precaches. Regenerate it or the change ships to nobody:
+`sw.js` carries a generated block: the precache list, a `VERSION`, and a
+`BUILD`. Regenerate it or the change ships to nobody:
 
 ```sh
 node tools/build.mjs          # rewrite the generated block in sw.js
-node tools/build.mjs --check  # exit 1 if stale — worth wiring into CI
+node tools/build.mjs --check  # exit 1 if stale; runs in the deploy build
 ```
 
-The hash covers file *contents*, not just names, so an HTML- or CSS-only edit
-bumps the version too.
+- **`VERSION`** is `yymmdd.hhmm`, local time, and is what the app shows in its
+  settings panel. It is for humans.
+- **`BUILD`** is a hash of every precached byte and is what actually keys the
+  cache. It exists because a timestamp can repeat — two builds in one minute
+  would leave `sw.js` byte-identical and the update would silently not ship.
+
+Both are stamped **only when the content hash moves**, so re-running the build
+with nothing changed neither bumps the version nor trips `--check`. Note that
+`tools/` is excluded from the hash: editing the build script alone will not
+re-stamp anything.
+
+## Checking for updates
+
+Two complementary mechanisms, because either alone has a blind spot:
+
+| Trigger | Catches |
+|---|---|
+| Worker version changed | any precached file — `BUILD` covers all of them |
+| Content diff on the shell | you edited `index.html` and forgot to rebuild |
+
+The worker serves the cached shell, refetches `index.html` behind it, and
+messages the page only if the bytes actually differ. The page checks on launch,
+on every `visibilitychange`, hourly while open, and on demand from the **Check
+for updates** button. The reload is always user-initiated, so a deploy never
+interrupts a running metronome.
+
+The first launch after a deploy is still served by the *old* worker, by design.
+It updates in the background and launch two is fast. Not a bug.
 
 ## Layout
 
@@ -39,31 +68,55 @@ bumps the version too.
 index.html          the app: shell, PWA head, boot order
 metronome-core.js   timing, pattern model, AudioWorklet engine
 support.js          Claude Design runtime (renders the template)
-app.js              service worker registration + update prompt
-sw.js               offline cache — GENERATED precache list, do not hand-edit
+app.js              worker registration, update prompt, version readout
+sw.js               offline cache — GENERATED block, do not hand-edit
 vendor/             Preact 10.27.2 (preact + hooks + compat)
 ds/styles.css       Organic design-system tokens
 fonts/              Caprasimo + Figtree, latin subset
 icons/              PNGs the manifest points at; .svg are their sources
-tools/build.mjs     regenerates sw.js
-_headers            Cloudflare Pages cache headers
+_headers            cache headers; paths carry the /metronome prefix
+wrangler.jsonc      Workers Static Assets config + route
+tools/build.mjs     regenerates the sw.js block
+tools/build-site.sh assembles _site/ for deployment
 ```
 
 ## Deploying
 
-Static hosting, no build step. On Cloudflare Pages: connect the repo, leave the
-build command empty, set the output directory to `/`. `_headers` keeps `sw.js`
-uncached — a cached worker script is an app that can never update.
+Cloudflare Workers (Static Assets), deployed from Git via Workers Builds.
+
+| Setting | Value |
+|---|---|
+| Build command | `bash tools/build-site.sh` |
+| Deploy command | `npx wrangler deploy` |
+| Path | `/` |
+| Non-production branch builds | off |
+| Cloudflare Access | off — it is a public app |
+
+`tools/build-site.sh` runs `build.mjs --check` (so a stale precache list fails
+the deploy rather than breaking cold launches) and assembles `_site/`:
+
+```
+_site/_headers              must sit at the assets root to be read
+_site/metronome/…           nested, so the app serves at /metronome
+```
+
+`aaanth.com` must be an active zone on the same Cloudflare account for the
+route in `wrangler.jsonc` to bind.
 
 ## Installing on iOS
 
-Open the site in Safari, tap Share, then **Add to Home Screen**. The name and
-icon come from `apple-mobile-web-app-title` and `apple-touch-icon`, not from the
-manifest, so both are set explicitly in `index.html`.
+Open **https://a.aaanth.com/metronome/** in Safari, tap Share, then
+**Add to Home Screen**. The name and icon come from
+`apple-mobile-web-app-title` and `apple-touch-icon`, not from the manifest, so
+both are set explicitly in `index.html`.
 
-An installed PWA is welded to the origin it was installed from. If this ever
-moves to another domain, the old icon keeps opening the old origin's cached
-copy — moving it needs a real worker left behind at the old URLs, not a redirect.
+The manifest deliberately has **no `id`** — it then defaults to `start_url`,
+which is relative, keeping the app portable across paths. An explicit `"id"`
+of `/` would claim the origin root instead.
+
+An installed PWA is welded to the origin *and* scope it was installed from. If
+this ever moves, the old icon keeps opening the old origin's cached copy —
+moving it needs a real worker left behind at the old URLs, never a redirect.
 
 ## Provenance
 
@@ -93,6 +146,8 @@ Changes made to turn the artboard into a deployable app:
 - **`syncUrl` and `keyboard` default to true**, so the share link round-trips a
   pattern and desktop gets space/arrows/T.
 - **The `<helmet>` block is hoisted into a real `<head>`.**
+- **A version row was added to the settings panel**, bound to `swVersion` /
+  `onCheckUpdates`, which the template re-renders on a `swinfo` event.
 - **The install hint is gated on `(pointer: coarse)`** in `metronome-core.js` —
   it is Share-sheet instructions, and it was showing on desktop.
 - `metronome-core.js` has been reformatted by Prettier; the `AudioWorklet`

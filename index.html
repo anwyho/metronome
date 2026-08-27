@@ -166,6 +166,11 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
           <button onClick="{{ onDismissInstall }}" aria-label="Dismiss" style="width:32px; height:32px; border-radius:999px; flex:none; font-size:16px; color:var(--color-accent-2-800);">×</button>
         </div>
       </sc-if>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding-top:var(--space-2);">
+        <span style="font-size:12px; color:var(--color-neutral-600);">Version {{ swVersion }}</span>
+        <button onClick="{{ onCheckUpdates }}" style="{{ checkStyle }}">{{ checkLabel }}</button>
+      </div>
   </div>
 
   <sc-if value="{{ unsupported }}" hint-placeholder-val="{{ false }}">
@@ -181,6 +186,7 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
 
 <script type="text/x-dc" data-dc-script data-props="{&quot;instanceId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;syncUrl&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;keyboard&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const NOOP = () => {};
+const CHECK_LABEL = { idle:'Check for updates', checking:'Checking\u2026', current:'Up to date', update:'Update ready' };
 const LEVEL_NAME = { accent:'major accent', minor:'minor accent', normal:'beat', muted:'silent' };
 const FB = {
   bpm:100, bpmText:'100', marking:'Andante', running:false, pending:false, hintVisible:true,
@@ -204,6 +210,8 @@ class Component extends DCLogic {
   componentDidMount(){
     this._rs = this.measure;
     addEventListener('resize', this._rs);
+    this._swi = () => this.forceUpdate();
+    addEventListener('swinfo', this._swi);
     if (window.ResizeObserver) { this._ro = new ResizeObserver(this.measure); }
     this.measure();
     const boot = () => {
@@ -217,7 +225,7 @@ class Component extends DCLogic {
     };
     boot();
   }
-  componentWillUnmount(){ removeEventListener('resize', this._rs); if (this._ro) this._ro.disconnect(); clearTimeout(this._t); if (this.ctl) this.ctl.unmount(); }
+  componentWillUnmount(){ removeEventListener('resize', this._rs); removeEventListener('swinfo', this._swi); if (this._ro) this._ro.disconnect(); clearTimeout(this._t); if (this.ctl) this.ctl.unmount(); }
 
   renderVals(){
     const v = this.ctl ? this.ctl.vals() : FB;
@@ -320,7 +328,11 @@ class Component extends DCLogic {
       copyLabel: v.copied ? 'Copied' : 'Share link',
       shareStyle: 'width:44px; height:44px; border-radius:999px; font-size:18px; display:flex; align-items:center; justify-content:center; flex:none; background:' + (v.copied ? 'var(--color-accent-2-200)' : 'transparent') + '; color:var(--color-neutral-700);',
       onCopy: v.onCopy || NOOP,
-      onDismissInstall: v.onDismissInstall || NOOP
+      onDismissInstall: v.onDismissInstall || NOOP,
+      swVersion: (window.__swInfo && window.__swInfo.version) || '—',
+      checkLabel: CHECK_LABEL[(window.__swInfo && window.__swInfo.state) || 'idle'],
+      checkStyle: 'height:32px; padding:0 var(--space-3); border-radius:999px; font-size:12px; font-weight:600; color:var(--color-neutral-700); background:var(--color-surface);',
+      onCheckUpdates: () => (window.__checkForUpdates || NOOP)()
     };
   }
 }

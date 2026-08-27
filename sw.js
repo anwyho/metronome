@@ -1,9 +1,14 @@
 /* Offline-first worker for the metronome.
-   VERSION and PRECACHE below are generated — run `node tools/build.mjs` after
-   changing any shipped file. `node tools/build.mjs --check` fails if stale. */
+   The block below is generated — run `node tools/build.mjs` after changing any
+   shipped file. `node tools/build.mjs --check` fails if stale.
+
+   VERSION is the calendar date, for humans. BUILD is a hash of every precached
+   byte and is what actually keys the cache: two deploys on one day share a
+   VERSION, so keying on it would leave sw.js identical and never update. */
 
 /* @generated-begin */
-const VERSION = 'db6dd583bb73304b';
+const VERSION = '260827.1627';
+const BUILD = '199f1f586537';
 const PRECACHE = [
   './',
   'app.js',
@@ -24,7 +29,7 @@ const PRECACHE = [
 ];
 /* @generated-end */
 
-const CACHE = "metronome-" + VERSION;
+const CACHE = "metronome-" + BUILD;
 const SHELL = "index.html";
 
 self.addEventListener("install", (event) => {
@@ -67,6 +72,15 @@ async function refreshShell(servedCopy) {
     client.postMessage({ type: "content-updated" });
   }
 }
+
+/* The page asks on load so it can show which build it is running, and again
+   after a manual check. */
+self.addEventListener("message", (event) => {
+  if (!event.data || event.data.type !== "version") return;
+  const reply = { type: "version", version: VERSION, build: BUILD };
+  if (event.ports && event.ports[0]) event.ports[0].postMessage(reply);
+  else if (event.source) event.source.postMessage(reply);
+});
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
