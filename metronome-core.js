@@ -438,12 +438,11 @@ registerProcessor('click-processor', ClickProcessor);
         const ctx = new (window.AudioContext || window.webkitAudioContext)({
           latencyHint: "interactive",
         });
-        /* Ambient mixes with whatever is already playing instead of taking the
-           media channel from it. The cost is that iOS silences it on screen
-           lock and on the ring/silent switch — the screen wake lock covers the
-           first, and nothing covers the second. */
+        /* Playback keeps the click going through a screen lock and through the
+           ring/silent switch, at the price of taking the media channel. The
+           web cannot ask for both — see the table in the README. */
         try {
-          if (navigator.audioSession) navigator.audioSession.type = "ambient";
+          if (navigator.audioSession) navigator.audioSession.type = "playback";
         } catch (e) {}
         const url = URL.createObjectURL(
           new Blob([WORKLET_SRC], { type: "application/javascript" }),

@@ -96,21 +96,34 @@ cream whichever theme is active.
 
 ## Sound and the screen
 
-The audio session is **ambient**, so the click mixes with whatever is already
-playing rather than taking the media channel from it — start it over a backing
-track and the track keeps going.
+The audio session is **playback**, so the click survives a screen lock, a
+backgrounded tab, and the ring/silent switch. A metronome that goes quiet
+because the phone is on silent is not much of a metronome.
 
-iOS silences an ambient session when the screen locks, so starting the transport
-takes a screen wake lock and holds it for the run. The system can reclaim that
-lock on its own — a hidden tab, battery saver — so the sentinel is watched and a
-new one taken on the next `visibilitychange`. A dead sentinel left in place
-reads as held, and the screen would sleep mid-run with the audio going quiet
-behind it.
+The price is that playback *is* the media channel: starting the click
+interrupts whatever else was playing. That is not something this app can refine
+away. The combination you would want exists natively — `AVAudioSessionCategory`
+`Playback` with the `mixWithOthers` option mixes *and* ignores the switch — but
+the web cannot ask for it. WebKit never sets that option, and every session type
+reachable from the web that mixes maps to the same silence-obeying category:
 
-What none of this covers is the **ring/silent switch**: an ambient session obeys
-it, so a silenced phone plays no click. That is the price of not interrupting
-other audio. `playback` ignores the switch and survives backgrounding, but takes
-the media channel from whatever was playing the moment it starts.
+| `navigator.audioSession.type` | iOS category | mixes | ignores silent switch |
+| --- | --- | --- | --- |
+| `playback` | MediaPlayback | no | **yes** |
+| `ambient` | AmbientSound | **yes** | no |
+| `transient` | AmbientSound | **yes** | no |
+| `transient-solo` | SoloAmbientSound | no | no |
+
+`transient` reads like the exception — the spec has it mixing with playback
+audio — but it maps to the same category as `ambient` and behaves identically on
+iOS. There is no third option, so this is a pick-one, and it was picked for the
+silent switch.
+
+Starting the transport also takes a screen wake lock, which is what keeps the
+beat grid in front of you rather than what keeps the sound alive. The system can
+reclaim that lock on its own — a hidden tab, battery saver — so the sentinel is
+watched and a new one taken on the next `visibilitychange`. A dead sentinel left
+in place reads as held, and the screen would sleep mid-run.
 
 ## Layout
 
