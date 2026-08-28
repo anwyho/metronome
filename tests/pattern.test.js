@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   cycleLevel,
   parseGrouping,
+  resize,
   rowsFromBeats,
 } from "../metronome/pattern.js";
 
@@ -66,6 +67,31 @@ describe("rows", () => {
         `${n} beats`,
       );
     }
+  });
+});
+
+describe("resizing", () => {
+  const bar = (n) => ["accent", ...beats(n - 1)];
+
+  it("moves by as many beats as it is asked for", () => {
+    assert.equal(resize(bar(4), 1).length, 5);
+    assert.equal(resize(bar(4), 6).length, 10);
+    assert.equal(resize(bar(12), -5).length, 7);
+  });
+
+  it("keeps the beats it is not removing", () => {
+    const before = ["accent", "minor", "muted", "normal", "accent"];
+    assert.deepEqual(resize(before, -2), before.slice(0, 3));
+    assert.deepEqual(resize(before, 2), [...before, "normal", "normal"]);
+  });
+
+  it("stops at the ends, and says so by not moving", () => {
+    const full = bar(24);
+    assert.equal(resize(full, 5), full, "the same array back");
+    assert.equal(resize(bar(20), 9).length, 24);
+    const smallest = bar(2);
+    assert.equal(resize(smallest, -3), smallest);
+    assert.equal(resize(bar(5), -9).length, 2);
   });
 });
 

@@ -1,6 +1,11 @@
 import { html } from "../html.js";
 import { LEVEL_NAME } from "../../metronome/pattern.js";
 import { GAP } from "../layout.js";
+import { HoldButton } from "./HoldButton.js";
+
+/* Twenty-two beats separate the ends of the range, so a hold crosses it in
+   about four seconds. The tempo's ceiling here would cross it in one frame. */
+const BEATS_PER_SECOND = 12;
 
 export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
   return html`
@@ -35,21 +40,23 @@ export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
       </div>
 
       <div class="beats__count">
-        <button
+        <${HoldButton}
           class="round round--sm"
           aria-label="Fewer beats"
-          onClick=${() => onResize(-1)}
+          maxRate=${BEATS_PER_SECOND}
+          onStep=${(steps) => onResize(-steps)}
         >
           −
-        </button>
+        </${HoldButton}>
         <span>${beats.length} beats</span>
-        <button
+        <${HoldButton}
           class="round round--sm"
           aria-label="More beats"
-          onClick=${() => onResize(1)}
+          maxRate=${BEATS_PER_SECOND}
+          onStep=${(steps) => onResize(steps)}
         >
           +
-        </button>
+        </${HoldButton}>
       </div>
     </section>
   `;

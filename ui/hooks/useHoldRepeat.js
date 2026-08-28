@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "../../vendor/hooks.module.js";
-import { stepsAfter } from "../hold-repeat.js";
+import { MAX_RATE, stepsAfter } from "../hold-repeat.js";
 
 /* Press-and-hold. The press itself is always worth exactly one step, so a tap
    moves one and nothing else; repeating starts after the delay and accelerates
@@ -9,7 +9,7 @@ import { stepsAfter } from "../hold-repeat.js";
    an interval, and because a frame is the finest the number can be read at
    anyway. The pointer is deliberately not captured — leaving the button has to
    stop the repeat, and a captured pointer never leaves. */
-export function useHoldRepeat(onStep) {
+export function useHoldRepeat(onStep, maxRate = MAX_RATE) {
   const held = useRef(null);
 
   const stop = () => {
@@ -25,7 +25,7 @@ export function useHoldRepeat(onStep) {
     onStep(1);
     const state = { at: performance.now(), applied: 0, frame: 0 };
     const tick = () => {
-      const want = stepsAfter((performance.now() - state.at) / 1000);
+      const want = stepsAfter((performance.now() - state.at) / 1000, maxRate);
       if (want > state.applied) {
         onStep(want - state.applied);
         state.applied = want;

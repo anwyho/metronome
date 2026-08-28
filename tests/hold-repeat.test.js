@@ -51,6 +51,32 @@ describe("hold repeat", () => {
     assert.equal(over(HOLD_DELAY + 20, HOLD_DELAY + 21), atCeiling);
   });
 
+  it("takes its ceiling from the control it is driving", () => {
+    const SLOW = 12;
+    /* The opening is the same whatever the ceiling — a hold has to be usable
+       for one step before it is usable for twenty. */
+    assert.equal(stepsAfter(HOLD_DELAY + 0.25, SLOW), 1);
+    assert.ok(stepsAfter(HOLD_DELAY + 1, SLOW) <= stepsAfter(HOLD_DELAY + 1));
+
+    const rate =
+      stepsAfter(HOLD_DELAY + 11, SLOW) - stepsAfter(HOLD_DELAY + 10, SLOW);
+    assert.ok(Math.abs(rate - SLOW) <= 1, `${rate} steps a second`);
+
+    /* The beat count spans 22, and a hold should cross it in a few seconds
+       rather than in one frame. */
+    const crossed = [...Array(120).keys()]
+      .map((i) => HOLD_DELAY + i / 10)
+      .find((t) => stepsAfter(t, SLOW) >= 22);
+    assert.ok(
+      crossed - HOLD_DELAY > 2,
+      `crossed in ${(crossed - HOLD_DELAY).toFixed(1)}s`,
+    );
+    assert.ok(
+      crossed - HOLD_DELAY < 6,
+      `crossed in ${(crossed - HOLD_DELAY).toFixed(1)}s`,
+    );
+  });
+
   it("crosses the whole tempo range in a press somebody would actually hold", () => {
     const seconds = [...Array(300).keys()]
       .map((i) => HOLD_DELAY + i / 10)

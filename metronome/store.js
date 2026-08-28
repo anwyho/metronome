@@ -189,7 +189,11 @@ export function createStore({
 
     setBpm(value, retext = true) {
       const bpm = clampBpm(value);
+      const moved = bpm !== state.bpm;
       set(retext ? { bpm, bpmText: String(bpm) } : { bpm });
+      /* A hold pinned against the end of the range would otherwise rewrite the
+         link and re-anchor the worklet on every frame, for no change. */
+      if (!moved) return;
       writeHash();
       retime({ bpm });
     },
@@ -223,7 +227,10 @@ export function createStore({
       postPattern();
     },
     cycleBeat: (index) => actions.setBeats(cycleBeat(state.beats, index)),
-    resizeBeats: (delta) => actions.setBeats(resize(state.beats, delta)),
+    resizeBeats(delta) {
+      const beats = resize(state.beats, delta);
+      if (beats !== state.beats) actions.setBeats(beats);
+    },
 
     tap() {
       const taps = [...state.taps, performance.now()].slice(-8);

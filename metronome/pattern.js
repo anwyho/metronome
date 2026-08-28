@@ -27,10 +27,17 @@ export function cycleBeat(beats, index) {
   return next;
 }
 
+/* Moves the bar by `delta` beats, not by one: a held button asks for several
+   at a time once it is up to speed. Returns the same array when the range is
+   already at its end, so a caller can tell nothing happened. */
 export function resize(beats, delta) {
-  if (delta > 0 && beats.length < MAX_BEATS) return [...beats, "normal"];
-  if (delta < 0 && beats.length > MIN_BEATS) return beats.slice(0, -1);
-  return beats;
+  const length = Math.min(
+    MAX_BEATS,
+    Math.max(MIN_BEATS, beats.length + Math.round(delta)),
+  );
+  if (length === beats.length) return beats;
+  if (length < beats.length) return beats.slice(0, length);
+  return [...beats, ...Array(length - beats.length).fill("normal")];
 }
 
 /* "3+3+2" — a sum of group lengths, each group starting on an accent. */

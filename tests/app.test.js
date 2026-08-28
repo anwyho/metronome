@@ -123,6 +123,50 @@ describe("app", () => {
     await page.mouse.up();
   });
 
+  it("adds beats on a hold, one at a time at first", async () => {
+    await open("#bpm=100&beats=Xooo&sub=1");
+    const count = () =>
+      page.evaluate(() => document.querySelectorAll(".cell__dot").length);
+
+    await press('[aria-label="More beats"]');
+    assert.equal(await count(), 5, "a tap adds exactly one");
+
+    const box = await (await page.$('[aria-label="More beats"]')).boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await new Promise((r) => setTimeout(r, 250));
+    assert.equal(await count(), 6, "nothing repeats before the hold delay");
+    await new Promise((r) => setTimeout(r, 1000));
+    const held = await count();
+    await page.mouse.up();
+    await settle(page, 4);
+
+    assert.ok(held > 7, `only reached ${held} beats`);
+    /* The tempo's ceiling would have hit 24 within a frame of the first
+       repeat; this one is scaled to the range it drives. */
+    assert.ok(held < 24, `reached the end of the range at ${held}`);
+    const released = await count();
+    await new Promise((r) => setTimeout(r, 300));
+    assert.equal(await count(), released, "releasing stops it");
+  });
+
+  it("stops at the ends of the beat range", async () => {
+    await open("#bpm=100&beats=Xooo&sub=1");
+    const box = await (
+      await page.$('[aria-label="Fewer beats"]')
+    ).boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await new Promise((r) => setTimeout(r, 2500));
+    await page.mouse.up();
+    await settle(page, 4);
+    assert.equal(
+      await page.evaluate(() => document.querySelectorAll(".cell__dot").length),
+      2,
+    );
+    assert.deepEqual(page.errors, []);
+  });
+
   it("cycles a beat and writes it into the link", async () => {
     await open("#bpm=100&beats=Xooo&sub=1");
     await press('[aria-label="Beat 2, beat"]');
