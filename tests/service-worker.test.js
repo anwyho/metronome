@@ -23,16 +23,20 @@ describe("service worker", () => {
     return workerActive(page);
   };
 
+  /* Relative to where the app is mounted. The app has a `metronome/` directory
+     of its own, so trimming to the last "metronome/" would eat it. */
   const cacheKeys = (page) =>
-    page.evaluate(async (name) => {
-      const names = await caches.keys();
-      if (!names.includes(name)) return null;
-      const cache = await caches.open(name);
-      const keys = await cache.keys();
-      return keys.map(
-        (r) => new URL(r.url).pathname.replace(/^.*metronome\//, "") || "./",
-      );
-    }, CACHE);
+    page.evaluate(
+      async (name, base) => {
+        const names = await caches.keys();
+        if (!names.includes(name)) return null;
+        const cache = await caches.open(name);
+        const keys = await cache.keys();
+        return keys.map((r) => new URL(r.url).pathname.slice(base.length));
+      },
+      CACHE,
+      new URL(h.server.url).pathname,
+    );
 
   it("precaches every shipped file under a build-keyed name", async () => {
     const page = await h.page();

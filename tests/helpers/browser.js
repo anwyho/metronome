@@ -1,12 +1,35 @@
 /* Full Chrome, not chrome-headless-shell: the shell binary has no service
-   worker implementation, and half these tests are about the worker. Puppeteer
-   downloads a matching build on install; CHROME_PATH overrides it. */
+   worker implementation, and half of what is worth testing here is the worker.
+   `npx puppeteer browsers install chrome` provides one; CHROME_PATH, or a
+   Chrome already on the machine, stands in when it is missing. */
+
+import { existsSync } from "node:fs";
 import puppeteer from "puppeteer";
+
+const SYSTEM = [
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium",
+];
+
+function chrome() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  try {
+    const bundled = puppeteer.executablePath();
+    if (existsSync(bundled)) return bundled;
+  } catch {}
+  const found = SYSTEM.find((p) => existsSync(p));
+  if (found) return found;
+  throw new Error(
+    "No Chrome found. Run `npx puppeteer browsers install chrome`, or set CHROME_PATH.",
+  );
+}
 
 export function launch(options = {}) {
   return puppeteer.launch({
     headless: true,
-    executablePath: process.env.CHROME_PATH || undefined,
+    executablePath: chrome(),
     args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"],
     ...options,
   });
@@ -23,16 +46,3 @@ export const dispatch = (page, type, target = "document") =>
     type,
     target,
   );
-
-export async function waitForActiveWorker(page, timeout = 15000) {
-  await page.waitForFunction(
-    () =>
-      navigator.serviceWorker.controller ||
-      navigator.serviceWorker.ready.then(() => true),
-    { timeout },
-  );
-  return page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.ready;
-    return { scriptURL: reg.active && reg.active.scriptURL };
-  });
-}

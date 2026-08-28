@@ -1,0 +1,588 @@
+/* The metronome's own styles. Every colour, space and radius comes from the
+   design-system tokens; nothing here names a hex.
+
+   The narrow layout is the primary one — a single column that scroll-snaps
+   between the transport and the settings panel. Past 820px there is room for
+   both at once, so the panel moves alongside. */
+
+.shell {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+  scroll-padding-top: max(env(safe-area-inset-top), 54px);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  padding: max(env(safe-area-inset-top), 54px) var(--space-6)
+    max(env(safe-area-inset-bottom), 20px);
+}
+
+.main {
+  scroll-snap-align: start;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Under 700px there is not enough height for the wider rhythm. */
+@media (max-height: 699px) {
+  .main {
+    gap: var(--space-4);
+  }
+}
+
+.panel {
+  scroll-snap-align: start;
+  margin-top: var(--space-2);
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 820px) {
+  .shell {
+    display: flex;
+    align-items: safe center;
+    justify-content: center;
+    gap: var(--space-8);
+    padding: var(--space-4) var(--space-6);
+    scroll-snap-type: none;
+  }
+
+  .main {
+    width: 100%;
+    max-width: 430px;
+    flex: none;
+    min-height: 0;
+  }
+
+  .panel {
+    width: 352px;
+    flex: none;
+    gap: var(--space-6);
+    margin-top: 0;
+    padding: var(--space-6);
+    background: var(--color-neutral-100);
+    border-radius: var(--radius-lg);
+  }
+
+  .chevron {
+    display: none;
+  }
+}
+
+/* ── the beat grid ─────────────────────────────────────────────────────── */
+
+.beats {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* One height for every beat count, so adding or removing a beat never moves
+   the tempo or the transport — the cells shrink inside the box instead. */
+.grid {
+  height: var(--grid-height);
+  width: 100%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grid__inner {
+  display: grid;
+  width: 100%;
+  max-width: var(--grid-width);
+  gap: var(--grid-gap);
+}
+
+.cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cell-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cell__dot {
+  width: var(--dot);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  transition: width 130ms;
+}
+
+.cell__dot[data-level="accent"] {
+  --dot: 78%;
+  background: var(--color-accent);
+}
+
+.cell__dot[data-level="minor"] {
+  --dot: 58%;
+  background: var(--color-accent-2);
+}
+
+.cell__dot[data-level="normal"] {
+  --dot: 38%;
+  background: var(--color-neutral-700);
+}
+
+.cell__dot[data-level="muted"] {
+  --dot: 34%;
+  border: var(--ring) solid var(--color-neutral-400);
+}
+
+.cell__dot[data-live] {
+  box-shadow: 0 0 0 calc(var(--ring) + 2px) var(--color-neutral-300);
+  animation: pop 150ms ease-out;
+}
+
+.beats__count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex: none;
+}
+
+.beats__count span {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  white-space: nowrap;
+  width: 100px;
+  text-align: center;
+  flex: none;
+}
+
+/* ── round controls ────────────────────────────────────────────────────── */
+
+.round {
+  border-radius: 999px;
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.round--sm {
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+}
+
+.round--lg {
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+}
+
+/* ── tempo ─────────────────────────────────────────────────────────────── */
+
+.tempo {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tempo__marking {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  color: var(--color-accent-700);
+}
+
+.tempo__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.tempo__value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.tempo__input {
+  width: 118px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 62px;
+  line-height: 1;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-text);
+  /* Dragging the number is a second way to reach a tempo; the pointer has to
+     own the gesture for it, so the browser must not scroll on it. */
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.tempo__unit {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+}
+
+.tap {
+  margin-top: var(--space-2);
+  width: 216px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-family: var(--font-heading);
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* ── transport ─────────────────────────────────────────────────────────── */
+
+.transport {
+  flex: none;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* A stopped figure is a record of the last run, not a live one, and drops a
+   ramp step to say so. The row keeps its line box either way. */
+.counters {
+  min-height: 21px;
+  line-height: 21px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-neutral-600);
+}
+
+.counters[data-running] {
+  color: var(--color-neutral-700);
+}
+
+.transport__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.count-in {
+  width: 92px;
+  height: 92px;
+  flex: none;
+  border-radius: 999px;
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.2;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  color: var(--color-neutral-700);
+}
+
+.count-in[aria-pressed="true"] {
+  background: var(--color-accent-2);
+  color: var(--color-neutral-100);
+}
+
+.start {
+  width: 132px;
+  height: 132px;
+  flex: none;
+  border-radius: 999px;
+  font-family: var(--font-heading);
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  background: var(--color-accent);
+  color: var(--color-neutral-100);
+  box-shadow: var(--shadow-lg);
+}
+
+.start[data-running] {
+  border-color: var(--color-accent-700);
+  background: transparent;
+  color: var(--color-accent-700);
+  box-shadow: none;
+}
+
+.chevron {
+  flex: none;
+  align-self: center;
+  margin-bottom: var(--space-3);
+  width: 52px;
+  height: 36px;
+  border-radius: 999px;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-600);
+}
+
+/* ── settings panel ────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.field__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  line-height: 1.4;
+}
+
+.field__value {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  color: var(--color-accent-700);
+}
+
+.field__value[data-off] {
+  color: var(--color-neutral-600);
+}
+
+.field__meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-neutral-600);
+}
+
+.field__note {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-neutral-600);
+}
+
+.slider {
+  width: 100%;
+  height: 24px;
+}
+
+.pill-track {
+  height: 32px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 var(--space-3);
+}
+
+.sub-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-neutral-500);
+}
+
+.sub-dot:first-child {
+  width: 12px;
+  height: 12px;
+  background: var(--color-text);
+}
+
+/* The track is one tick pair: the first dot at the pair's start, the second at
+   the point the swing splits it. */
+.swing-pair {
+  position: relative;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.swing-pair__dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--color-text);
+  left: 10px;
+}
+
+.swing-pair__dot--swung {
+  background: var(--color-accent);
+  left: var(--swung-left);
+  transition: left 130ms;
+}
+
+.swing-slider {
+  position: relative;
+  height: 24px;
+}
+
+.swing-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.swing-guides__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-neutral-300);
+}
+
+/* The thumb is 24px, so its centre travels between 12px and width − 12px; a
+   dot marks each named stop at the point the thumb settles on it. */
+.swing-guides__stop {
+  position: absolute;
+  top: 50%;
+  left: calc(12px + (100% - 24px) * var(--at));
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-neutral-500);
+}
+
+[data-disabled] .swing-pair__dot {
+  opacity: 0.35;
+}
+
+[data-disabled] .swing-guides,
+[data-disabled] .swing-slider input {
+  opacity: 0.45;
+}
+
+/* ── install hint, actions, version ────────────────────────────────────── */
+
+.install {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  background: var(--color-accent-2-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.install span {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.install button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex: none;
+  font-size: 16px;
+  color: var(--color-accent-2-800);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.share {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--color-neutral-700);
+}
+
+.share[data-copied] {
+  background: var(--color-accent-2-200);
+}
+
+.theme {
+  margin-left: auto;
+  height: 44px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-neutral-700);
+}
+
+/* The row keeps its height whether or not the offer is in it. */
+.version {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+  min-height: 32px;
+  font-size: 12px;
+  color: var(--color-neutral-600);
+}
+
+.version button {
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--color-accent);
+  color: var(--color-neutral-100);
+}
+
+.unsupported {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  font-size: 17px;
+  line-height: 1.5;
+}

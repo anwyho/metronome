@@ -8,8 +8,8 @@
    update would never ship. */
 
 /* @generated-begin */
-const VERSION = "260828.0933";
-const BUILD = "2207f9c59602";
+const VERSION = "260828.0943";
+const BUILD = "fcdecac0e630";
 const PRECACHE = [
   "./",
   "app.js",
@@ -21,14 +21,40 @@ const PRECACHE = [
   "icons/icon-512.png",
   "icons/maskable-512.png",
   "manifest.webmanifest",
-  "metronome-core.js",
-  "support.js",
+  "metronome/engine.js",
+  "metronome/pattern.js",
+  "metronome/prefs.js",
+  "metronome/share.js",
+  "metronome/store.js",
+  "metronome/swing.js",
+  "metronome/tempo.js",
+  "metronome/timing.js",
+  "metronome/worklet.js",
+  "styles/app.css",
+  "styles/base.css",
+  "ui/App.js",
+  "ui/components/BeatGrid.js",
+  "ui/components/CountInButton.js",
+  "ui/components/InstallHint.js",
+  "ui/components/SettingsPanel.js",
+  "ui/components/ShareButton.js",
+  "ui/components/SubdivisionControl.js",
+  "ui/components/SwingControl.js",
+  "ui/components/TempoControl.js",
+  "ui/components/ThemeToggle.js",
+  "ui/components/Transport.js",
+  "ui/components/UpdateRow.js",
+  "ui/components/VolumeControl.js",
+  "ui/hooks/useServiceWorker.js",
+  "ui/hooks/useStore.js",
+  "ui/hooks/useTheme.js",
+  "ui/hooks/useViewport.js",
+  "ui/html.js",
+  "ui/layout.js",
+  "ui/main.js",
   "vendor/hooks.module.js",
   "vendor/htm.module.js",
-  "vendor/preact-compat.umd.js",
-  "vendor/preact-hooks.umd.js",
   "vendor/preact.module.js",
-  "vendor/preact.umd.js",
 ];
 /* @generated-end */
 
