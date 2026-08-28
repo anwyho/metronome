@@ -36,12 +36,19 @@ const files = walk(ROOT)
    sw.js. It stays in `files`, so an HTML-only edit still bumps BUILD. */
 const precache = ['./', ...files.filter((f) => f !== 'index.html')];
 
+/* sw.js is not precached — the browser fetches it through its own update check
+   — but its logic is shipped code, so editing it has to rekey the cache as
+   well. Its generated block is stripped first, or the hash would feed itself. */
+const swSource = readFileSync(join(ROOT, 'sw.js'), 'utf8')
+  .replace(/\/\* @generated-begin \*\/[\s\S]*?\/\* @generated-end \*\//, '');
+
 /* Hash the file *contents*, not just the names: an HTML- or CSS-only edit has
    to bump the version too, or a copy change ships to nobody. The precache list
-   goes in as well, so changing what the worker caches rekeys the cache and
-   retires the old one rather than leaving orphans in it. */
+   and the worker's own source go in as well, so changing what gets cached — or
+   how it is served — rekeys the cache instead of leaving a stale one in place. */
 const h = createHash('sha256');
 h.update(precache.join('\n'));
+h.update(swSource);
 for (const f of files) {
   h.update(f);
   h.update(readFileSync(join(ROOT, f)));

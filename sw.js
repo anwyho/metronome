@@ -8,8 +8,8 @@
    update would never ship. */
 
 /* @generated-begin */
-const VERSION = '260827.2157';
-const BUILD = '75c147d01832';
+const VERSION = '260827.2204';
+const BUILD = '82d683081731';
 const PRECACHE = [
   './',
   'app.js',
@@ -35,13 +35,42 @@ const CACHE = "metronome-" + BUILD;
    that flag is rejected outright when it answers a navigation. */
 const SHELL = "./";
 
+/* A response that followed a redirect carries a flag the browser refuses for a
+   navigation, and nothing here wants the flag — only the bytes. Rebuilding the
+   response drops it. Left alone otherwise: an opaqueredirect reports false and
+   must stay intact, since its body cannot be read. */
+function unredirected(res) {
+  return res.redirected
+    ? new Response(res.body, {
+        status: res.status,
+        statusText: res.statusText,
+        headers: res.headers,
+      })
+    : res;
+}
+
+/* addAll would store whatever a redirect resolved to, flag and all, so the
+   precache is filled by hand. A file that does not come back ok still fails the
+   whole install: a cache that claims to be complete and is not stalls the app
+   on its next cold launch, offline, with no way to notice from here. */
+async function precacheAll(cache) {
+  /* Every fetch settles before anything is written, so a failure leaves the
+     cache untouched rather than half-filled — what addAll gave us for free. */
+  const entries = await Promise.all(
+    PRECACHE.map(async (u) => {
+      const res = await fetch(new Request(u, { cache: "reload" }));
+      if (!res.ok) throw new Error("precache " + u + " -> " + res.status);
+      return [u, unredirected(res)];
+    }),
+  );
+  await Promise.all(entries.map(([u, res]) => cache.put(u, res)));
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((c) =>
-        c.addAll(PRECACHE.map((u) => new Request(u, { cache: "reload" }))),
-      )
+      .then(precacheAll)
       .then(() => self.skipWaiting()),
   );
 });
@@ -70,7 +99,7 @@ async function refreshShell(servedCopy) {
   const fresh = res.clone();
   const text = await res.text();
   if (text === served) return;
-  await (await caches.open(CACHE)).put(SHELL, fresh);
+  await (await caches.open(CACHE)).put(SHELL, unredirected(fresh));
   for (const client of await self.clients.matchAll()) {
     client.postMessage({ type: "content-updated" });
   }
@@ -105,10 +134,11 @@ self.addEventListener("fetch", (event) => {
            its body is locked and clone() throws — inside waitUntil, where the
            rejection is invisible and the cache silently stops refreshing. */
           event.waitUntil(refreshShell(hit.clone()).catch(() => {}));
-          return hit;
+          /* Clone first: unredirected() reads the body to rebuild it. */
+          return unredirected(hit);
         }
         try {
-          return await fetch(req);
+          return unredirected(await fetch(req));
         } catch (e) {
           return new Response("Offline and nothing cached yet.", {
             status: 503,
