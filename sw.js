@@ -8,8 +8,8 @@
    update would never ship. */
 
 /* @generated-begin */
-const VERSION = "260828.0931";
-const BUILD = "54fdcdd53303";
+const VERSION = "260828.0933";
+const BUILD = "2207f9c59602";
 const PRECACHE = [
   "./",
   "app.js",
@@ -23,8 +23,11 @@ const PRECACHE = [
   "manifest.webmanifest",
   "metronome-core.js",
   "support.js",
+  "vendor/hooks.module.js",
+  "vendor/htm.module.js",
   "vendor/preact-compat.umd.js",
   "vendor/preact-hooks.umd.js",
+  "vendor/preact.module.js",
   "vendor/preact.umd.js",
 ];
 /* @generated-end */
