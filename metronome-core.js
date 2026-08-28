@@ -52,7 +52,10 @@ class ClickProcessor extends AudioWorkletProcessor {
         const tk=this.nextTick, tt=this.timeAtTick(tk);
         if(tt >= tEnd) break;
         const bc0=this.pattern.length, span0=bc0*this.sub;
-        if(this.pendingPattern && tk>=0 && (((tk % span0)+span0)%span0)===0){
+        /* Re-accenting a beat keeps the bar the same shape, so it lands on the
+           next tick. Changing the count re-indexes every beat under a listener
+           already inside the bar, so that one still waits for the downbeat. */
+        if(this.pendingPattern && (this.pendingPattern.length===bc0 || (tk>=0 && (((tk % span0)+span0)%span0)===0))){
           this.pattern=this.pendingPattern; this.pendingPattern=null;
         }
         const bc=this.pattern.length, span=bc*this.sub;
@@ -594,9 +597,14 @@ registerProcessor('click-processor', ClickProcessor);
     tickFrame() {
       if (!this.s.running || !this.ctx || !this.a) return;
       const lat = this.ctx.outputLatency || this.ctx.baseLatency || 0;
+      /* A frame computed now reaches the screen a frame or two after it, which
+         reads as the dot lighting behind the click. Take the schedule slightly
+         ahead to cover the trip, capped at a quarter tick so a fast
+         subdivision cannot be nudged onto the next one. */
+      const lead = Math.min(0.05, 15 / (this.abpm * this.asub));
       const t = Math.floor(
         this.tickAtTime(
-          this.ctx.currentTime - lat,
+          this.ctx.currentTime - lat + lead,
           this.a,
           this.abpm,
           this.asub,

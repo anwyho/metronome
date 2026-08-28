@@ -180,7 +180,8 @@ Changes made to turn the artboard into a deployable app:
   `onCheckUpdates`, which the template re-renders on a `swinfo` event.
 - **The install hint is gated on `(pointer: coarse)`** in `metronome-core.js` —
   it is Share-sheet instructions, and it was showing on desktop.
-- `metronome-core.js` has been reformatted by Prettier; the `AudioWorklet`
-  source string inside it is byte-identical to the export.
+- `metronome-core.js` has been reformatted by Prettier. The `AudioWorklet`
+  source string inside it came over unchanged; it has since been edited, so
+  re-exporting means re-applying those edits too.
 
 Re-exporting from the canvas means re-applying that list.

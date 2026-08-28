@@ -159,8 +159,8 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
     </div>
     <button onClick="{{ onTap }}" data-audio-gate="1" aria-label="Tap tempo" style="margin-top:var(--space-2); width:216px; height:48px; border-radius:999px; background:var(--color-surface); font-family:var(--font-heading); font-size:19px; display:flex; align-items:center; justify-content:center; flex:none;">Tap</button>
   </div>
-  <div style="flex:none; display:flex; flex-direction:column; align-items:center; gap:var(--space-2);">
-    <div style="min-height:21px; line-height:21px; font-family:var(--font-body); font-size:13px; font-weight:600; letter-spacing:0.06em; color:var(--color-neutral-700);">{{ counters }}</div>
+  <div style="flex:none; margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:var(--space-2);">
+    <div style="{{ countersStyle }}">{{ counters }}</div>
     <div style="display:flex; align-items:center; justify-content:center; gap:var(--space-3);">
       <button onClick="{{ onCountIn }}" aria-pressed="{{ countInPressed }}" style="{{ countInStyle }}">{{ countInLabel }}</button>
       <button onClick="{{ onToggle }}" data-audio-gate="1" style="{{ startStyle }}">{{ startLabel }}</button>
@@ -303,13 +303,14 @@ class Component extends DCLogic {
     const cols = nB <= 6 ? nB : Math.ceil(nB / Math.ceil(nB / 6));
     const gridRows = Math.ceil(nB / cols);
     const cellMax = nB <= 4 ? 64 : 56;
-    /* The box takes what the rows actually need, never more, so a small pattern
-       does not leave a well of empty space above the tempo. What is spare is
-       measured from the laid-out screen and left a few pixels short, so the
-       chevron is not flush to the bottom edge. Past what fits, cells shrink
-       rather than the box clipping them. */
+    /* One height for every beat count, so adding or removing a beat never moves
+       the tempo or the transport — cells shrink inside the box instead. Two
+       rows at full size is what it holds: sizing it for five would sink the
+       counts nearly everyone uses under a well of empty space. What is spare is
+       measured from the laid-out screen and left a little short, so the chevron
+       is not flush to the bottom edge. */
     const spare = Math.min(268, Math.max(56, this.state.vh - (wide ? 500 : this.state.vh < 700 ? 500 : 526)));
-    const GRID_H = Math.round(Math.min(spare, gridRows * cellMax + (gridRows - 1) * GAP));
+    const GRID_H = Math.round(Math.min(spare, 2 * 56 + GAP));
     const cell = Math.floor(Math.min(cellMax, (GRID_H - (gridRows - 1) * GAP) / gridRows));
     const gridStyle = 'height:' + GRID_H + 'px; width:100%; flex:none; display:flex; align-items:center; justify-content:center;';
     const gridInner = 'display:grid; width:100%; max-width:' + (cols * cell + (cols - 1) * GAP) + 'px; grid-template-columns:repeat(' + cols + ', minmax(0,1fr)); gap:' + GAP + 'px;';
@@ -323,6 +324,10 @@ class Component extends DCLogic {
       inc: () => (v.onBpmDelta || NOOP)(1),
       dec: () => (v.onBpmDelta || NOOP)(-1),
       counters: v.elapsed ? v.elapsed + ' · ' + v.bars + ' bars' : '',
+      /* A stopped figure is a record of the last run, not a live one, and drops
+         a ramp step to say so. */
+      countersStyle: 'min-height:21px; line-height:21px; font-family:var(--font-body); font-size:13px; font-weight:600; letter-spacing:0.06em; color:'
+        + (v.running ? 'var(--color-neutral-700)' : 'var(--color-neutral-600)') + ';',
       startLabel: v.running ? 'Stop' : 'Start',
       startStyle: 'width:132px; height:132px; flex:none; border-radius:999px; font-family:var(--font-heading); font-size:28px; display:flex; align-items:center; justify-content:center; border:2px solid ' + (v.running ? 'var(--color-accent-700)' : 'transparent') + '; background:' + (v.running ? 'transparent' : 'var(--color-accent)') + '; color:' + (v.running ? 'var(--color-accent-700)' : 'var(--color-neutral-100)') + '; box-shadow:' + (v.running ? 'none' : 'var(--shadow-lg)') + ';',
       onToggle: v.onToggle || NOOP,
@@ -341,7 +346,7 @@ class Component extends DCLogic {
         : 'height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; scroll-snap-type:y proximity; scroll-padding-top:max(env(safe-area-inset-top), 54px); scroll-behavior:smooth; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); padding:max(env(safe-area-inset-top), 54px) var(--space-6) max(env(safe-area-inset-bottom), 20px);',
       mainStyle: wide
         ? 'width:100%; max-width:430px; flex:none; display:flex; flex-direction:column; gap:var(--space-6);'
-        : 'scroll-snap-align:start; min-height:100%; display:flex; flex-direction:column; justify-content:center; gap:' + (this.state.vh < 700 ? 'var(--space-4)' : 'var(--space-6)') + ';',
+        : 'scroll-snap-align:start; min-height:100%; display:flex; flex-direction:column; gap:' + (this.state.vh < 700 ? 'var(--space-4)' : 'var(--space-6)') + ';',
       panelStyle: wide
         ? 'width:352px; flex:none; display:flex; flex-direction:column; gap:var(--space-6); background:var(--color-neutral-100); border-radius:var(--radius-lg); padding:var(--space-6);'
         : 'scroll-snap-align:start; margin-top:var(--space-2); padding-top:var(--space-6); display:flex; flex-direction:column; gap:var(--space-4); padding-bottom:var(--space-4);',

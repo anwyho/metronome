@@ -76,8 +76,9 @@
         if (document.visibilityState === "visible") reg.update();
       };
       addEventListener("visibilitychange", check);
-      /* an installed app can sit open for days without a navigation */
-      setInterval(check, 60 * 60 * 1000);
+      /* Registering above is itself a check, so a reload always asks. This is
+         for an installed app, which can sit open for days without one. */
+      setInterval(check, 5 * 60 * 1000);
     })
     .catch(function (err) {
       console.error("[metronome] service worker registration failed:", err);
