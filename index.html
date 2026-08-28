@@ -91,17 +91,16 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
   #update-banner {
     position: fixed; left: 50%; transform: translateX(-50%);
     bottom: max(env(safe-area-inset-bottom), 16px);
-    z-index: 100; display: none; align-items: center; gap: var(--space-3);
-    padding: 10px 12px 10px 18px; border-radius: 999px;
-    background: var(--color-neutral-900); color: var(--color-neutral-100);
-    font-family: var(--font-body); font-size: 14px; box-shadow: var(--shadow-lg);
-  }
-  #update-banner[data-show] { display: flex; }
-  #update-banner button {
-    font: inherit; font-weight: 700; cursor: pointer; border: none;
-    padding: 7px 16px; border-radius: 999px;
+    z-index: 100; display: none;
+    padding: 11px 20px; border-radius: 999px;
     background: var(--color-accent); color: var(--color-neutral-100);
+    font-family: var(--font-body); font-size: 14px; font-weight: 700;
+    box-shadow: var(--shadow-lg);
   }
+  #update-banner[data-show] { display: block; }
+  /* The button floats over the panel's last row, so the scroller gives up the
+     height only while it is up. */
+  body:has(#update-banner[data-show]) [data-scroll] { padding-bottom: 84px !important; }
 </style>
 
 <script>
@@ -222,9 +221,8 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
         </div>
       </sc-if>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding-top:var(--space-2);">
+      <div style="padding-top:var(--space-2);">
         <span style="font-size:12px; color:var(--color-neutral-600);">Version {{ swVersion }}</span>
-        <button onClick="{{ onCheckUpdates }}" style="{{ checkStyle }}">{{ checkLabel }}</button>
       </div>
   </div>
 
@@ -234,14 +232,10 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
 </div>
 </x-dc>
 
-<div id="update-banner" role="status">
-  <span>New version available</span>
-  <button type="button" id="update-reload">Refresh</button>
-</div>
+<button type="button" id="update-banner" role="status">Update available</button>
 
 <script type="text/x-dc" data-dc-script data-props="{&quot;instanceId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;syncUrl&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;keyboard&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const NOOP = () => {};
-const CHECK_LABEL = { idle:'Check for updates', checking:'Checking\u2026', current:'Up to date', update:'Update ready' };
 /* Single-path Lucide sun-moon / sun / moon, so the icon is one bound attribute
    rather than three conditional blocks. */
 const THEME = {
@@ -338,7 +332,7 @@ class Component extends DCLogic {
         if (el) { if (this._ro) this._ro.observe(el); this.measure(); }
       },
       shellStyle: wide
-        ? 'height:100%; overflow-y:auto; overflow-x:hidden; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); padding:var(--space-4) var(--space-6); display:flex; align-items:flex-start; justify-content:center; gap:var(--space-8);'
+        ? 'height:100%; overflow-y:auto; overflow-x:hidden; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); padding:var(--space-4) var(--space-6); display:flex; align-items:flex-start; align-items:safe center; justify-content:center; gap:var(--space-8);'
         : 'height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; scroll-snap-type:y proximity; scroll-padding-top:max(env(safe-area-inset-top), 54px); scroll-behavior:smooth; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); padding:max(env(safe-area-inset-top), 54px) var(--space-6) max(env(safe-area-inset-bottom), 20px);',
       mainStyle: wide
         ? 'width:100%; max-width:430px; flex:none; display:flex; flex-direction:column; gap:var(--space-6);'
@@ -423,10 +417,7 @@ class Component extends DCLogic {
       themeAria: 'Appearance: ' + theme.label + '. Tap to change.',
       themeStyle: 'margin-left:auto; height:44px; padding:0 var(--space-3); border-radius:999px; display:flex; align-items:center; gap:var(--space-2); flex:none; font-size:13px; font-weight:600; color:var(--color-neutral-700);',
       onTheme: () => (window.__theme || { cycle: NOOP }).cycle(),
-      swVersion: (window.__swInfo && window.__swInfo.version) || '—',
-      checkLabel: CHECK_LABEL[(window.__swInfo && window.__swInfo.state) || 'idle'],
-      checkStyle: 'height:32px; padding:0 var(--space-3); border-radius:999px; font-size:12px; font-weight:600; color:var(--color-neutral-700); background:var(--color-surface);',
-      onCheckUpdates: () => (window.__checkForUpdates || NOOP)()
+      swVersion: (window.__swInfo && window.__swInfo.version) || '—'
     };
   }
 }

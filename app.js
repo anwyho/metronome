@@ -4,22 +4,16 @@
 (function () {
   /* The template reads this and re-renders on the 'swinfo' event. Created here
      or by the template script, whichever runs first. */
-  var info =
-    window.__swInfo || (window.__swInfo = { version: null, state: "idle" });
+  var info = window.__swInfo || (window.__swInfo = { version: null });
 
   function set(patch) {
     for (var k in patch) info[k] = patch[k];
     dispatchEvent(new Event("swinfo"));
   }
 
-  if (!("serviceWorker" in navigator)) {
-    window.__checkForUpdates = function () {};
-    return;
-  }
+  if (!("serviceWorker" in navigator)) return;
 
   var sw = navigator.serviceWorker;
-  var registration = null;
-  var revert = null;
 
   /* An uncontrolled page is a first launch: the worker installing and claiming
      fires controllerchange with nothing new anywhere. Only a change of script
@@ -61,43 +55,22 @@
     sw.controller.postMessage({ type: "version" }, [ch.port2]);
   }
 
+  /* Checking is silent — on launch, on every visibilitychange and hourly. The
+     only thing an update surfaces is this button, and only once there really
+     is one to take. */
   function showBanner() {
-    set({ state: "update" });
     var el = document.getElementById("update-banner");
     if (!el || el.hasAttribute("data-show")) return;
     el.setAttribute("data-show", "");
-    document
-      .getElementById("update-reload")
-      .addEventListener("click", function () {
-        if (reloading) return;
-        reloading = true;
-        location.reload();
-      });
+    el.addEventListener("click", function () {
+      if (reloading) return;
+      reloading = true;
+      location.reload();
+    });
   }
-
-  /* A manual check exists because the automatic ones are invisible: after a
-     deploy you want to know whether this device has it, not wait an hour. */
-  window.__checkForUpdates = function () {
-    if (!registration || info.state === "checking") return;
-    clearTimeout(revert);
-    set({ state: "checking" });
-    registration
-      .update()
-      .then(function () {
-        if (registration.installing || registration.waiting) return; // banner will follow
-        set({ state: "current" });
-        revert = setTimeout(function () {
-          set({ state: "idle" });
-        }, 3000);
-      })
-      .catch(function () {
-        set({ state: "idle" });
-      });
-  };
 
   sw.register("sw.js", { scope: "./" })
     .then(function (reg) {
-      registration = reg;
       askVersion();
       var check = function () {
         if (document.visibilityState === "visible") reg.update();
