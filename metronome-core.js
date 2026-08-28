@@ -119,6 +119,8 @@ registerProcessor('click-processor', ClickProcessor);
   /* swing splits a tick PAIR long-short, so it only means anything when the
      clicks per beat divide into pairs — even subdivisions. §3.4 */
   const swingApplies = (sub) => sub >= 2 && sub % 2 === 0;
+  const clock = (sec) =>
+    Math.floor(sec / 60) + ":" + String(Math.floor(sec % 60)).padStart(2, "0");
 
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -298,6 +300,8 @@ registerProcessor('click-processor', ClickProcessor);
         grouping: "",
         unsupported: false,
         startedAt: 0,
+        lastElapsed: "",
+        lastBars: 0,
         standalone: false,
         installDismissed: false,
       };
@@ -527,6 +531,13 @@ registerProcessor('click-processor', ClickProcessor);
         } catch (e) {}
         this.wl = null;
       }
+      /* Freeze what the run reached before the live figures lose their source:
+         the readout stays up as a record of it until the page is reloaded. */
+      const span = this.s.beats.length * this.s.sub;
+      this.s.lastBars = Math.max(0, Math.floor(this.s.tick / span));
+      this.s.lastElapsed = clock(
+        this.ctx ? Math.max(0, this.ctx.currentTime - this.s.startedAt) : 0,
+      );
       this.s.running = false;
       this.s.pending = false;
       this.s.armed = false;
@@ -717,13 +728,12 @@ registerProcessor('click-processor', ClickProcessor);
         s.running && s.tick >= 0
           ? Math.floor((((s.tick % span) + span) % span) / s.sub)
           : -1;
-      const bars = s.running ? Math.max(0, Math.floor(s.tick / span)) : 0;
-      const el =
-        s.running && this.ctx
-          ? Math.max(0, this.ctx.currentTime - s.startedAt)
-          : 0;
-      const mm = Math.floor(el / 60),
-        ss = Math.floor(el % 60);
+      const bars = s.running
+        ? Math.max(0, Math.floor(s.tick / span))
+        : s.lastBars;
+      const elapsed = s.running
+        ? clock(this.ctx ? Math.max(0, this.ctx.currentTime - s.startedAt) : 0)
+        : s.lastElapsed;
       return {
         s,
         unsupported: s.unsupported,
@@ -736,7 +746,7 @@ registerProcessor('click-processor', ClickProcessor);
         beatCount: s.beats.length,
         curBeat,
         bars,
-        elapsed: mm + ":" + String(ss).padStart(2, "0"),
+        elapsed,
         tapCount: s.taps.length,
         volume: s.volume,
         swing: s.swing,

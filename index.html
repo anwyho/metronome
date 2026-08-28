@@ -76,8 +76,10 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
   a:hover { color:var(--color-accent-800); }
   button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
   button:focus-visible, input:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
-  input[type=range] { -webkit-appearance:none; appearance:none; background:transparent; touch-action:auto; }
+  input[type=range] { -webkit-appearance:none; appearance:none; background:transparent; touch-action:auto; margin:0; }
   input[type=range]::-webkit-slider-runnable-track { height:4px; border-radius:999px; background:var(--color-neutral-300); }
+  input[type=range][data-guides]::-webkit-slider-runnable-track { background:transparent; }
+  input[type=range][data-guides]::-moz-range-track { background:transparent; }
   input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; margin-top:-10px; border-radius:999px; background:var(--color-accent); }
   @keyframes pop { 0% { transform:scale(1); } 35% { transform:scale(1.22); } 100% { transform:scale(1); } }
   @keyframes cellIn { from { transform:scale(0.35); opacity:0; } to { transform:scale(1); opacity:1; } }
@@ -192,11 +194,14 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
           <div style="{{ swingDotA }}"></div>
           <div style="{{ swingDotB }}"></div>
         </div>
-        <input type="range" min="50" max="75" step="1" value="{{ swingValue }}" onInput="{{ onSwingEv }}" disabled="{{ swingDisabled }}" aria-label="Swing" style="{{ swingSlider }}">
-        <div style="{{ swingGuides }}" aria-hidden="true">
-          <sc-for list="{{ swingTicks }}" as="t" hint-placeholder-count="5">
-            <div style="{{ t.box }}"><div style="{{ t.mark }}"></div><span style="{{ t.label }}">{{ t.name }}</span></div>
-          </sc-for>
+        <div style="position:relative; height:24px;">
+          <div style="{{ swingGuides }}" aria-hidden="true">
+            <div style="{{ swingTrack }}"></div>
+            <sc-for list="{{ swingTicks }}" as="t" hint-placeholder-count="5">
+              <div style="{{ t.dot }}"></div>
+            </sc-for>
+          </div>
+          <input type="range" data-guides="1" min="50" max="75" step="1" value="{{ swingValue }}" onInput="{{ onSwingEv }}" disabled="{{ swingDisabled }}" aria-label="Swing" style="{{ swingSlider }}">
         </div>
         <span style="text-align:center; font-size:13px; color:var(--color-neutral-600);">{{ swingNote }}</span>
       </div>
@@ -317,7 +322,7 @@ class Component extends DCLogic {
       onBpmCommit: v.onBpmCommit || NOOP,
       inc: () => (v.onBpmDelta || NOOP)(1),
       dec: () => (v.onBpmDelta || NOOP)(-1),
-      counters: v.running ? v.elapsed + ' · ' + v.bars + ' bars' : '',
+      counters: v.elapsed ? v.elapsed + ' · ' + v.bars + ' bars' : '',
       startLabel: v.running ? 'Stop' : 'Start',
       startStyle: 'width:132px; height:132px; flex:none; border-radius:999px; font-family:var(--font-heading); font-size:28px; display:flex; align-items:center; justify-content:center; border:2px solid ' + (v.running ? 'var(--color-accent-700)' : 'transparent') + '; background:' + (v.running ? 'transparent' : 'var(--color-accent)') + '; color:' + (v.running ? 'var(--color-accent-700)' : 'var(--color-neutral-100)') + '; box-shadow:' + (v.running ? 'none' : 'var(--shadow-lg)') + ';',
       onToggle: v.onToggle || NOOP,
@@ -373,30 +378,19 @@ class Component extends DCLogic {
       swingNote: v.swingNote || '',
       swingValue: String(v.swing),
       swingNoteStyle: 'font-family:var(--font-heading); font-size:15px; color:' + (v.swingDisabled ? 'var(--color-neutral-600)' : 'var(--color-accent-700)') + ';',
-      swingSlider: 'width:100%; height:24px; opacity:' + (v.swingDisabled ? 0.45 : 1) + ';',
+      swingSlider: 'position:relative; width:100%; height:24px; opacity:' + (v.swingDisabled ? 0.45 : 1) + ';',
       swingDotA: 'position:absolute; left:10px; width:14px; height:14px; border-radius:999px; background:var(--color-text); opacity:' + (v.swingDisabled ? 0.35 : 1) + ';',
       /* the track is one tick pair: dot A at the pair start, dot B at swing × pair */
       swingDotB: 'position:absolute; left:calc(' + (frac * 100).toFixed(1) + '% - ' + (frac * 24 - 10).toFixed(0) + 'px); width:14px; height:14px; border-radius:999px; background:var(--color-accent); opacity:' + (v.swingDisabled ? 0.35 : 1) + '; transition:left 130ms;',
       onSwingEv: (e) => (v.onSwing || NOOP)(parseInt(e.target.value, 10) || 50),
-      swingGuides: 'position:relative; height:26px; margin-top:-2px;',
-      /* The thumb is 24px, so its centre travels between 12px and width-12px.
-         The end labels anchor to their edge instead of centring on the tick,
-         which would hang them off the panel. */
-      swingTicks: v.presets.map((p, i, all) => {
-        const frac = (p.value - 50) / 25;
-        const at = i === 0
-          ? 'left:12px; align-items:flex-start;'
-          : i === all.length - 1
-            ? 'left:calc(100% - 12px); transform:translateX(-100%); align-items:flex-end;'
-            : 'left:calc(12px + (100% - 24px) * ' + frac.toFixed(3) + '); transform:translateX(-50%); align-items:center;';
-        const on = p.active && !v.swingDisabled;
-        return {
-          name: p.label,
-          box: 'position:absolute; top:0; display:flex; flex-direction:column; align-items:center; gap:3px; ' + at + ' opacity:' + (v.swingDisabled ? 0.4 : 1) + ';',
-          mark: 'width:2px; height:6px; border-radius:1px; background:' + (on ? 'var(--color-accent)' : 'var(--color-neutral-400)') + ';',
-          label: 'font-size:10px; font-weight:600; white-space:nowrap; color:' + (on ? 'var(--color-accent-700)' : 'var(--color-neutral-600)') + ';',
-        };
-      }),
+      swingGuides: 'position:absolute; inset:0; pointer-events:none; opacity:' + (v.swingDisabled ? 0.45 : 1) + ';',
+      swingTrack: 'position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:4px; border-radius:999px; background:var(--color-neutral-300);',
+      /* The thumb is 24px, so its centre travels between 12px and width-12px;
+         a dot marks each named stop at the point the thumb settles on it. */
+      swingTicks: v.presets.map((p) => ({
+        dot: 'position:absolute; top:50%; left:calc(12px + (100% - 24px) * ' + ((p.value - 50) / 25).toFixed(3)
+           + '); transform:translate(-50%, -50%); width:6px; height:6px; border-radius:999px; background:var(--color-neutral-500);',
+      })),
       presets: v.presets.map(p => ({ label: p.label, onPick: () => { if (!v.swingDisabled) (v.onSwing || NOOP)(p.value); }, style: pill(p.active && !v.swingDisabled) + 'opacity:' + (v.swingDisabled ? 0.45 : 1) + ';' })),
       volValue: String(v.volume),
       volLabel: v.volume === 0 ? 'silent · visual only' : v.volume + '%',
