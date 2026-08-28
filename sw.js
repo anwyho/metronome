@@ -8,8 +8,8 @@
    update would never ship. */
 
 /* @generated-begin */
-const VERSION = '260827.2337';
-const BUILD = 'cf17affbc326';
+const VERSION = '260827.2348';
+const BUILD = '4bed99103fe0';
 const PRECACHE = [
   './',
   'app.js',
