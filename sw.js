@@ -10,8 +10,8 @@
    how responses are served rekeys the cache too. */
 
 /* @generated-begin */
-const VERSION = "260828.1000";
-const BUILD = "12ddbe9bff10";
+const VERSION = "260828.1004";
+const BUILD = "070480c9a07c";
 const PRECACHE = [
   "./",
   "fonts/caprasimo-latin.woff2",
@@ -41,6 +41,7 @@ const PRECACHE = [
   "ui/App.js",
   "ui/components/BeatGrid.js",
   "ui/components/CountInButton.js",
+  "ui/components/HoldButton.js",
   "ui/components/InstallHint.js",
   "ui/components/SettingsPanel.js",
   "ui/components/ShareButton.js",
@@ -51,6 +52,8 @@ const PRECACHE = [
   "ui/components/Transport.js",
   "ui/components/UpdateRow.js",
   "ui/components/VolumeControl.js",
+  "ui/hold-repeat.js",
+  "ui/hooks/useHoldRepeat.js",
   "ui/hooks/useServiceWorker.js",
   "ui/hooks/useStore.js",
   "ui/hooks/useTheme.js",

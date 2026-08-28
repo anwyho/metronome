@@ -1,5 +1,6 @@
 import { html } from "../html.js";
 import { tempoMarking } from "../../metronome/tempo.js";
+import { HoldButton } from "./HoldButton.js";
 
 /* Dragging the number is the third way to reach a tempo, after the buttons and
    typing. The pointer is captured so the gesture survives leaving the element,
@@ -31,13 +32,13 @@ export function TempoControl({ bpm, bpmText, actions }) {
     <section class="tempo">
       <span class="tempo__marking">${tempoMarking(bpm)}</span>
       <div class="tempo__row">
-        <button
+        <${HoldButton}
           class="round round--lg"
           aria-label="Decrease tempo"
-          onClick=${() => actions.nudgeBpm(-1)}
+          onStep=${(steps) => actions.nudgeBpm(-steps)}
         >
           −
-        </button>
+        </${HoldButton}>
         <div class="tempo__value">
           <input
             class="tempo__input"
@@ -50,13 +51,13 @@ export function TempoControl({ bpm, bpmText, actions }) {
           />
           <span class="tempo__unit">bpm</span>
         </div>
-        <button
+        <${HoldButton}
           class="round round--lg"
           aria-label="Increase tempo"
-          onClick=${() => actions.nudgeBpm(1)}
+          onStep=${(steps) => actions.nudgeBpm(steps)}
         >
           +
-        </button>
+        </${HoldButton}>
       </div>
       <button class="tap" aria-label="Tap tempo" onClick=${actions.tap}>
         Tap

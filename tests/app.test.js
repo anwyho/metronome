@@ -70,6 +70,59 @@ describe("app", () => {
     );
   });
 
+  it("moves one bpm on a tap and accelerates on a hold", async () => {
+    await open("#bpm=100&beats=Xooo&sub=1");
+    const bpm = () =>
+      page.evaluate(() =>
+        parseInt(document.querySelector(".tempo__input").value, 10),
+      );
+
+    await press('[aria-label="Increase tempo"]');
+    assert.equal(await bpm(), 101, "a tap is worth exactly one");
+
+    const button = await page.$('[aria-label="Increase tempo"]');
+    const box = await button.boundingBox();
+    const at = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await page.mouse.move(at.x, at.y);
+    await page.mouse.down();
+    await new Promise((r) => setTimeout(r, 250));
+    const early = await bpm();
+    await new Promise((r) => setTimeout(r, 1200));
+    const late = await bpm();
+    await page.mouse.up();
+    await settle(page, 4);
+    const released = await bpm();
+
+    assert.equal(early, 102, "nothing repeats before the hold delay is up");
+    assert.ok(late - early > 5, `only ${late - early} in the next 1.2s`);
+    /* Slow at the start and faster later, so the opening of a hold is still
+       usable for a nudge. */
+    assert.ok(late - early < 60, `${late - early} in 1.2s is a runaway`);
+    await new Promise((r) => setTimeout(r, 300));
+    assert.equal(await bpm(), released, "releasing stops it");
+  });
+
+  it("stops the hold when the pointer leaves the button", async () => {
+    await open("#bpm=100&beats=Xooo&sub=1");
+    const bpm = () =>
+      page.evaluate(() =>
+        parseInt(document.querySelector(".tempo__input").value, 10),
+      );
+    const box = await (
+      await page.$('[aria-label="Decrease tempo"]')
+    ).boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await new Promise((r) => setTimeout(r, 800));
+    await page.mouse.move(box.x + box.width / 2, box.y - 80);
+    await settle(page, 4);
+    const left = await bpm();
+    assert.ok(left < 99, "the hold was repeating before the pointer left");
+    await new Promise((r) => setTimeout(r, 400));
+    assert.equal(await bpm(), left);
+    await page.mouse.up();
+  });
+
   it("cycles a beat and writes it into the link", async () => {
     await open("#bpm=100&beats=Xooo&sub=1");
     await press('[aria-label="Beat 2, beat"]');
