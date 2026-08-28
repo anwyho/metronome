@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import { parseHash, serializeHash } from "../metronome/share.js";
 
 const DEFAULTS = {
-  bpm: 100,
-  beats: ["accent", "normal", "normal", "normal"],
+  bpm: 130,
+  beats: ["accent", "normal", "normal", "minor", "normal"],
   sub: 1,
   swing: 50,
 };

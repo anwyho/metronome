@@ -5,9 +5,12 @@ import { GLYPH, MAX_BEATS, MIN_BEATS, parseGrouping } from "./pattern.js";
 import { MAX_BPM, MIN_BPM, clampBpm } from "./tempo.js";
 import { STRAIGHT, clampSwing } from "./swing.js";
 
+/* What a first visit opens on — a five-beat bar with a minor accent on the
+   fourth, so the grid arrives showing what the levels are for rather than four
+   identical dots. */
 export const DEFAULTS = {
-  bpm: 100,
-  beats: ["accent", "normal", "normal", "normal"],
+  bpm: 130,
+  beats: ["accent", "normal", "normal", "minor", "normal"],
   sub: 1,
   swing: STRAIGHT,
 };

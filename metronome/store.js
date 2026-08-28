@@ -6,7 +6,7 @@ import { installContext } from "../pwa/install.js";
 import { createEngine, supported } from "./engine.js";
 import { createPrefs } from "./prefs.js";
 import { cycleBeat, resize } from "./pattern.js";
-import { parseHash, serializeHash } from "./share.js";
+import { DEFAULTS, parseHash, serializeHash } from "./share.js";
 import { clampBpm, tapTempo } from "./tempo.js";
 import { STRAIGHT } from "./swing.js";
 import { reanchor, swingApplies, tickAtTime, visualLead } from "./timing.js";
@@ -39,11 +39,8 @@ export function createStore({
   const listeners = new Set();
 
   let state = {
-    bpm: 100,
-    bpmText: "100",
-    beats: ["accent", "normal", "normal", "normal"],
-    sub: 1,
-    swing: STRAIGHT,
+    ...DEFAULTS,
+    bpmText: String(DEFAULTS.bpm),
     volume: 80,
     countIn: 0,
     running: false,
