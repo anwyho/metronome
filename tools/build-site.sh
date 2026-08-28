@@ -6,8 +6,6 @@ cd "$(dirname "$0")/.."
 
 npm run build
 
-node tools/build.mjs   # no longer --check; dist is regenerated, never stale
-
 [ -d _site ] && rm -rf _site
 mkdir -p _site/metronome
 cp -R dist/. _site/metronome/
@@ -18,7 +16,7 @@ cp _headers _site/_headers
 # path in one and not the other is a cold launch that 404s, so check.
 node --input-type=module -e '
 import { readFileSync, existsSync } from "node:fs";
-const sw = readFileSync("sw.js", "utf8");
+const sw = readFileSync("dist/sw.js", "utf8");
 const missing = [...sw.matchAll(/^ {2}"([^"]+)",$/gm)]
   .map((m) => (m[1] === "./" ? "index.html" : m[1]))
   .filter((f) => !existsSync("_site/metronome/" + f));

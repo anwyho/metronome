@@ -8,12 +8,13 @@
 
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import type { AddressInfo } from "node:net";
 import { dirname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-const TYPES = {
+const TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8",
@@ -25,9 +26,33 @@ const TYPES = {
   ".svg": "image/svg+xml",
 };
 
+interface ServerOptions {
+  root?: string;
+  mount?: string;
+  missing?: Iterable<string>;
+  files?: Record<string, string | Buffer>;
+  redirectShell?: boolean;
+  port?: number;
+}
+
+interface ServerState {
+  missing: Set<string>;
+  files: Map<string, string | Buffer>;
+  redirectShell: boolean;
+  offline: boolean;
+}
+
+interface ServerHandle {
+  port: number;
+  origin: string;
+  url: string;
+  state: ServerState;
+  close: () => Promise<void>;
+}
+
 /* Mirrors _headers. The worker diffs the shell to detect a deploy, so an
    intermediary holding it stale would hide every content-only change. */
-function cacheControl(rel) {
+function cacheControl(rel: string): string | null {
   if (rel === "sw.js" || rel === "index.html" || rel === "manifest.webmanifest")
     return "no-cache";
   if (rel.startsWith("fonts/")) return "public, max-age=31536000, immutable";
@@ -38,7 +63,9 @@ function cacheControl(rel) {
   return null;
 }
 
-export function startServer(options = {}) {
+export function startServer(
+  options: ServerOptions = {},
+): Promise<ServerHandle> {
   const root = options.root || ROOT;
   const mount = options.mount ?? "/metronome/";
 
@@ -52,7 +79,7 @@ export function startServer(options = {}) {
   };
 
   const server = createServer((req, res) => {
-    const url = new URL(req.url, "http://127.0.0.1");
+    const url = new URL(req.url ?? "/", "http://127.0.0.1");
 
     if (state.offline) {
       req.destroy();
@@ -111,18 +138,18 @@ export function startServer(options = {}) {
     res.end(req.method === "HEAD" ? undefined : body);
   });
 
-  return new Promise((ok) => {
+  return new Promise<ServerHandle>((ok) => {
     server.listen(options.port || 0, "127.0.0.1", () => {
-      const { port } = server.address();
+      const { port } = server.address() as AddressInfo;
       ok({
         port,
         origin: `http://127.0.0.1:${port}`,
         url: `http://127.0.0.1:${port}${mount}`,
         state,
         close: () =>
-          new Promise((done) => {
+          new Promise<void>((done) => {
             server.closeAllConnections();
-            server.close(done);
+            server.close(() => done());
           }),
       });
     });
