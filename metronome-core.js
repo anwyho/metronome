@@ -584,16 +584,26 @@ registerProcessor('click-processor', ClickProcessor);
       const swingRaw = next.swing !== undefined ? next.swing : this.s.swing;
       const swing = swingApplies(sub) ? swingRaw : 50;
       if (sub !== oldS) {
-        /* A tick in one subdivision rarely names a tick in another, and
-           rounding the converted anchor to the nearest pair moved the beat
-           itself — a quarter of a beat here, an eighth there, compounding each
-           time the slider passed a value until the downbeat no longer fell on
-           the pulse. A beat boundary is the one position both grids agree on,
-           so a change of subdivision waits for the next one. Tempo and swing
-           still take the next pair; neither converts, so neither can drift. */
-        const beat = Math.ceil(nowTick / oldS);
-        atick = beat * sub;
-        atime = this.timeAtTick(beat * oldS, a, oldB, oldS, oldSw);
+        /* Rounding the converted anchor to the nearest pair moved the beat
+           itself — eight to four at tick 50 is beat 6.25, converts exactly to
+           25, and rounds to 26, a quarter beat late — and dragging the slider
+           stacked those until the downbeat left the pulse. Take the conversion
+           when it names a whole tick, which is most of the time and costs
+           nothing; otherwise wait for the beat, the one position both grids
+           agree on. Tempo and swing still take the next pair: neither
+           converts, so neither can drift, and neither should wait. */
+        const exact = (atick / oldS) * sub;
+        const whole = Math.round(exact);
+        if (
+          Math.abs(exact - whole) < 1e-9 &&
+          (swing === 50 || whole % 2 === 0)
+        ) {
+          atick = whole;
+        } else {
+          const beat = Math.ceil(nowTick / oldS);
+          atick = beat * sub;
+          atime = this.timeAtTick(beat * oldS, a, oldB, oldS, oldSw);
+        }
       }
       const anchor = { tick: atick, time: atime };
       this.a = anchor;
