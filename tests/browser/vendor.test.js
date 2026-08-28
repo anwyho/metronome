@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { after, before, describe, it } from "node:test";
-import { harness } from "./helpers/app.js";
+import { harness } from "../helpers/app.js";
 
 /* Proves the no-build path end to end: the browser resolves the vendored
    modules by itself, with no import map and no bundler, because vendor.mjs

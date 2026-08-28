@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { after, before, describe, it } from "node:test";
-import { harness, settle } from "./helpers/app.js";
+import { harness, settle } from "../helpers/app.js";
 
 describe("app", () => {
   let h;

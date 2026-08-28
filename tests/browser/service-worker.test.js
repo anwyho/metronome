@@ -7,7 +7,7 @@ import {
   VERSION,
   harness,
   workerActive,
-} from "./helpers/app.js";
+} from "../helpers/app.js";
 
 const CACHE = "metronome-" + BUILD;
 

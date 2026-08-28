@@ -12,7 +12,10 @@
     "vendor": "node tools/vendor.mjs",
     "site": "bash tools/build-site.sh",
     "serve": "npm run build && node dist/tools/serve.js",
-    "test": "npm run build && node --test --test-concurrency=1 \"dist/tests/**/*.test.js\"",
+    "pretest": "npm run build",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "node --test \"dist/tests/*.test.js\"",
+    "test:browser": "node --test --test-concurrency=1 \"dist/tests/browser/*.test.js\"",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

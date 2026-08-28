@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { after, before, describe, it } from "node:test";
-import { harness, rectOf, rectOfText, settle } from "./helpers/app.js";
+import { harness, rectOf, rectOfText, settle } from "../helpers/app.js";
 
 /* 629 is a mini with both Safari toolbars showing, and is the height that
    breaks; the rest are the common iPhone viewports. */
