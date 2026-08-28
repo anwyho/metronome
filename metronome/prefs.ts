@@ -9,9 +9,19 @@
 export type ThemePref = "system" | "light" | "dark";
 export type Resolved = "light" | "dark";
 
-/* Everything that may be in the record. Every field is optional: the record is
-   whatever an older build, or a hand-edited localStorage, left behind. */
+/* What comes back out of the record. Every field is `unknown`, not the type it
+   is written as: the value is whatever an older build, or a hand-edited
+   localStorage, left behind, and JSON.parse cannot promise more than that. A
+   reader has to narrow, which is what the store already does. */
 export interface StoredPrefs {
+  volume?: unknown;
+  countIn?: unknown;
+  installDismissed?: unknown;
+  pattern?: unknown;
+}
+
+/* The write side does control what it writes, so it says so. */
+export interface PrefsPatch {
   volume?: number;
   countIn?: number;
   installDismissed?: boolean;
@@ -21,7 +31,7 @@ export interface StoredPrefs {
 export interface Prefs {
   key: string;
   read(): StoredPrefs;
-  save(patch: StoredPrefs): void;
+  save(patch: PrefsPatch): void;
 }
 
 export function createPrefs(id = "a"): Prefs {
