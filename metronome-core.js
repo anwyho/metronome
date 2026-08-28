@@ -170,7 +170,7 @@ registerProcessor('click-processor', ClickProcessor);
     return clamp(
       Math.round(60000 / (buf.reduce((a, b) => a + b, 0) / buf.length)),
       20,
-      300,
+      600,
     );
   }
 
@@ -195,7 +195,7 @@ registerProcessor('click-processor', ClickProcessor);
     }
     if (kv.bpm !== undefined) {
       const n = parseFloat(kv.bpm);
-      if (Number.isFinite(n)) out.bpm = clamp(Math.round(n), 20, 300);
+      if (Number.isFinite(n)) out.bpm = clamp(Math.round(n), 20, 600);
     }
     if (kv.groups !== undefined) {
       const g = parseGrouping(kv.groups);
@@ -653,7 +653,7 @@ registerProcessor('click-processor', ClickProcessor);
     }
 
     setBpm(v, retext) {
-      const bpm = clamp(Math.round(v), 20, 300);
+      const bpm = clamp(Math.round(v), 20, 600);
       this.s.bpm = bpm;
       if (retext) this.s.bpmText = String(bpm);
       this.writeHash();
