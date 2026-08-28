@@ -293,15 +293,14 @@ class Component extends DCLogic {
     const v = this.ctl ? this.ctl.vals() : FB;
     const pill = (on) => 'height:36px; padding:0 var(--space-3); border-radius:999px; font-size:13px; font-weight:600; border:1px solid ' + (on ? 'transparent' : 'var(--color-neutral-300)') + '; background:' + (on ? 'var(--color-accent)' : 'transparent') + '; color:' + (on ? 'var(--color-neutral-100)' : 'var(--color-text)') + ';';
     const frac = v.swing / 100;
-    /* The grid box is a FIXED height for every beat count 1-30, so adding or
-       removing beats never moves anything around it: cells shrink to fit the
-       rows instead of the box growing. */
     const wide = this.state.vw >= 820;
     const GAP = 8;
     const flatBeats = v.rows.reduce((a, r) => a.concat(r), []);
     const nB = flatBeats.length || 1;
-    const cols = nB <= 6 ? nB : Math.ceil(nB / Math.ceil(nB / 6));
-    const gridRows = Math.ceil(nB / cols);
+    /* Six across reads best, but a fourth row costs more than a wider one, so
+       past eighteen the grid widens toward eight rather than take one. */
+    const gridRows = Math.min(3, Math.ceil(nB / 6));
+    const cols = nB <= 6 ? nB : Math.ceil(nB / gridRows);
     const cellMax = nB <= 4 ? 64 : 56;
     /* One height for every beat count, so adding or removing a beat never moves
        the tempo or the transport — cells shrink inside the box instead. Two

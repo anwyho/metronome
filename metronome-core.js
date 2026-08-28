@@ -140,7 +140,7 @@ registerProcessor('click-processor', ClickProcessor);
     const nums = parts.map(Number);
     if (nums.some((n) => n < 1)) return null;
     const sum = nums.reduce((a, b) => a + b, 0);
-    if (sum < 2 || sum > 30) return null;
+    if (sum < 2 || sum > 24) return null;
     const out = [];
     for (const n of nums) {
       out.push("accent");
@@ -215,7 +215,7 @@ registerProcessor('click-processor', ClickProcessor);
                   ? "muted"
                   : "normal",
           );
-        if (b.length > 30) b = b.slice(0, 30);
+        if (b.length > 24) b = b.slice(0, 24);
         while (b.length < 2) b.push("normal");
         out.beats = b;
       }
@@ -695,7 +695,7 @@ registerProcessor('click-processor', ClickProcessor);
     }
     resize(d) {
       const b = this.s.beats.slice();
-      if (d > 0 && b.length < 30) b.push("normal");
+      if (d > 0 && b.length < 24) b.push("normal");
       if (d < 0 && b.length > 2) b.pop();
       this.setBeats(b);
     }
