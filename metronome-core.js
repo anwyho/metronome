@@ -438,8 +438,12 @@ registerProcessor('click-processor', ClickProcessor);
         const ctx = new (window.AudioContext || window.webkitAudioContext)({
           latencyHint: "interactive",
         });
+        /* Ambient mixes with whatever is already playing instead of taking the
+           media channel from it. The cost is that iOS silences it on screen
+           lock and on the ring/silent switch — the screen wake lock covers the
+           first, and nothing covers the second. */
         try {
-          if (navigator.audioSession) navigator.audioSession.type = "playback";
+          if (navigator.audioSession) navigator.audioSession.type = "ambient";
         } catch (e) {}
         const url = URL.createObjectURL(
           new Blob([WORKLET_SRC], { type: "application/javascript" }),
@@ -461,8 +465,16 @@ registerProcessor('click-processor', ClickProcessor);
 
     async acquireWakeLock() {
       try {
-        if (navigator.wakeLock)
-          this.wl = await navigator.wakeLock.request("screen");
+        if (!navigator.wakeLock) return;
+        const wl = await navigator.wakeLock.request("screen");
+        /* The system drops the sentinel on its own — tab hidden, battery saver
+           — and a dead one left here reads as held, so the visibilitychange
+           above would never take a new one and the screen would sleep mid-run
+           with the audio session going quiet behind it. */
+        wl.addEventListener("release", () => {
+          if (this.wl === wl) this.wl = null;
+        });
+        this.wl = wl;
       } catch (e) {}
     }
 

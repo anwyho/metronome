@@ -56,9 +56,11 @@ Two complementary mechanisms, because either alone has a blind spot:
 
 The worker serves the cached shell, refetches `index.html` behind it, and
 messages the page only if the bytes actually differ. The page checks on launch,
-on every `visibilitychange`, hourly while open, and on demand from the **Check
-for updates** button. The reload is always user-initiated, so a deploy never
-interrupts a running metronome.
+on every `visibilitychange`, and every five minutes while open. There is nothing
+to press to run a check — finding something raises an **Update available**
+button beside the version in the settings panel, and it is absent until then.
+The reload is always user-initiated, so a deploy never interrupts a running
+metronome.
 
 The first launch after a deploy is still served by the *old* worker, by design.
 It updates in the background and launch two is fast. Not a bug.
@@ -91,6 +93,24 @@ The in-page `theme-color` meta is rewritten on every change, so the iOS status
 bar tracks the theme. The manifest's `theme_color` and `background_color` cannot
 — they are read once, at install — so an installed app's launch splash stays
 cream whichever theme is active.
+
+## Sound and the screen
+
+The audio session is **ambient**, so the click mixes with whatever is already
+playing rather than taking the media channel from it — start it over a backing
+track and the track keeps going.
+
+iOS silences an ambient session when the screen locks, so starting the transport
+takes a screen wake lock and holds it for the run. The system can reclaim that
+lock on its own — a hidden tab, battery saver — so the sentinel is watched and a
+new one taken on the next `visibilitychange`. A dead sentinel left in place
+reads as held, and the screen would sleep mid-run with the audio going quiet
+behind it.
+
+What none of this covers is the **ring/silent switch**: an ambient session obeys
+it, so a silenced phone plays no click. That is the price of not interrupting
+other audio. `playback` ignores the switch and survives backgrounding, but takes
+the media channel from whatever was playing the moment it starts.
 
 ## Layout
 
