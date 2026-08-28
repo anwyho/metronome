@@ -8,8 +8,8 @@ import { createPrefs } from "./prefs.js";
 import { cycleBeat, resize } from "./pattern.js";
 import { DEFAULTS, parseHash, serializeHash } from "./share.js";
 import { clampBpm, tapTempo } from "./tempo.js";
-import { STRAIGHT } from "./swing.js";
-import { reanchor, swingApplies, tickAtTime, visualLead } from "./timing.js";
+import { STRAIGHT, swingApplies } from "./swing.js";
+import { reanchor, tickAtTime, visualLead } from "./timing.js";
 
 /* How far ahead of the press the first click is scheduled. Long enough to
    survive a busy frame, short enough not to read as lag. */
@@ -89,9 +89,14 @@ export function createStore({
 
   /* ---- transport ---- */
 
-  function retime(next) {
+  /* Always the whole grid, read from state after the action has updated it —
+     never a patch over what the worklet happens to be playing. */
+  function retime() {
     if (!live || !state.running) return;
-    const message = reanchor({ ...live, now: engine.currentTime }, next);
+    const message = reanchor(
+      { ...live, now: engine.currentTime },
+      { bpm: state.bpm, sub: state.sub, swing: state.swing },
+    );
     live = message;
     engine.post({
       type: "reanchor",
@@ -186,7 +191,7 @@ export function createStore({
          link and re-anchor the worklet on every frame, for no change. */
       if (!moved) return;
       writeHash();
-      retime({ bpm });
+      retime();
     },
     nudgeBpm: (delta) => actions.setBpm(state.bpm + delta),
     setBpmText(raw) {
@@ -199,12 +204,12 @@ export function createStore({
     setSub(sub) {
       set({ sub });
       writeHash();
-      retime({ sub });
+      retime();
     },
     setSwing(swing) {
       set({ swing });
       writeHash();
-      retime({ swing });
+      retime();
     },
     setVolume(volume) {
       set({ volume });
@@ -315,7 +320,7 @@ export function createStore({
       if (!syncUrl) return;
       adopt(parseHash(location.hash));
       writeHash();
-      retime({});
+      retime();
       postPattern();
     });
     on("keydown", onKey);

@@ -1,10 +1,11 @@
-/* Swing: the named stops, and what to call a value between them. Pure.
-   `swingApplies` lives in timing.js, where the tick pair it depends on is
-   defined. */
-
-import { swingApplies } from "./timing.js";
+/* Swing: whether it applies, the named stops, and what to call a value between
+   them. Pure. */
 
 export const STRAIGHT = 50;
+
+/* Swing splits a tick pair long-short, so it only means anything when the
+   clicks per beat divide into pairs — even subdivisions. */
+export const swingApplies = (sub) => sub >= 2 && sub % 2 === 0;
 /* The off-tick can land anywhere in the pair bar the very ends, where it would
    collide with the tick on either side. Under 50 it lands early — reverse
    swing; the worklet's tick times and its shortest-click cap already handle it. */

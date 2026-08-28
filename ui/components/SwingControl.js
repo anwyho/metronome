@@ -6,9 +6,9 @@ import {
   STRAIGHT,
   pairPosition,
   swingFraction,
+  swingApplies,
   swingName,
 } from "../../metronome/swing.js";
-import { swingApplies } from "../../metronome/timing.js";
 
 export function SwingControl({ swing, sub, onChange }) {
   const off = !swingApplies(sub);
@@ -64,7 +64,12 @@ export function SwingControl({ swing, sub, onChange }) {
         />
       </div>
 
-      <span class="field__note">Needs an even number of clicks per beat.</span>
+      <!-- Always rendered, shown only when the constraint is actually biting.
+           Removing it would take its line box with it and lift every row below
+           the swing control by the height of a line. -->
+      <span class="field__note" data-shown=${off ? "" : null}>
+        Needs an even number of clicks per beat.
+      </span>
     </div>
   `;
 }

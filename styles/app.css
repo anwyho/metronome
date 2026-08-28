@@ -391,10 +391,17 @@
   color: var(--color-neutral-600);
 }
 
+/* The slot is always there; the words are not. Hidden rather than absent, so
+   the rows below it do not move when the constraint stops applying. */
 .field__note {
   text-align: center;
   font-size: 13px;
   color: var(--color-neutral-600);
+  visibility: hidden;
+}
+
+.field__note[data-shown] {
+  visibility: visible;
 }
 
 .slider {

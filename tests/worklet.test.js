@@ -70,7 +70,10 @@ describe("worklet", () => {
 
     for (const sub of [2, 3, 4, 5, 6, 7, 8, 7, 5, 3, 8, 2, 6, 1, 4, 8]) {
       w.advance(0.07);
-      const next = reanchor({ ...from, now: w.time }, { sub });
+      const next = reanchor(
+        { ...from, now: w.time },
+        { bpm: BPM, sub, swing: 50 },
+      );
       if (!next) continue;
       w.send({
         type: "reanchor",
@@ -98,6 +101,40 @@ describe("worklet", () => {
         `accent at ${a.time} left the downbeat`,
       );
     }
+  });
+
+  it("keeps the swing across a drag that passes through an odd subdivision", () => {
+    const w = running(2, 67);
+    let from = { anchor: START, bpm: BPM, sub: 2, swing: 67 };
+    /* 2 to 4 on the slider goes through 3, where swing cannot apply. */
+    for (const sub of [3, 4]) {
+      w.advance(0.3);
+      const next = reanchor(
+        { ...from, now: w.time },
+        { bpm: BPM, sub, swing: 67 },
+      );
+      w.send({
+        type: "reanchor",
+        anchor: next.anchor,
+        bpm: next.bpm,
+        subdivision: next.sub,
+        swing: next.swing,
+        applyAtTime: next.anchor.time,
+      });
+      from = next;
+    }
+    w.advance(2 * BEAT);
+
+    /* Four per beat swung to 67 is two pairs, each split roughly two to one. A
+       straight grid would have put every click the same distance apart, so the
+       ratio between the gaps is the whole assertion. */
+    const tail = w.clicks.slice(-5);
+    const gaps = tail.slice(1).map((c, i) => c.time - tail[i].time);
+    const ratio = Math.max(...gaps) / Math.min(...gaps);
+    assert.ok(
+      ratio > 1.8 && ratio < 2.2,
+      `expected a long-short split, got gaps ${gaps.map((g) => g.toFixed(4))}`,
+    );
   });
 
   it("places the off-tick early when swing is under 50", () => {

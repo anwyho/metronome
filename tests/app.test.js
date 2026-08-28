@@ -222,14 +222,15 @@ describe("app", () => {
     await page.waitForFunction(() =>
       /bars/.test(document.querySelector(".counters").textContent),
     );
-    const running = await text(".counters");
     await pressText("Stop");
     assert.equal(await text(".start"), "Start");
-    await settle(page, 6);
-    assert.equal(
-      await text(".counters"),
-      running.replace(/^\S+/, (t) => t),
-    );
+    /* The readout stays up as a record of the run rather than resetting, and
+       stops moving. Comparing it against a reading taken before the press
+       raced the second it was about to tick over. */
+    const stopped = await text(".counters");
+    assert.match(stopped, /^\d+:\d\d · \d+ bars$/);
+    await new Promise((r) => setTimeout(r, 500));
+    assert.equal(await text(".counters"), stopped);
     assert.equal(
       await page.evaluate(() =>
         document.querySelector(".cell__dot[data-live]"),
@@ -249,6 +250,25 @@ describe("app", () => {
     assert.equal(await disabled(), true);
     await drag("Clicks per beat", 4);
     assert.equal(await disabled(), false);
+
+    /* The note explains why the control is off, so it has no business being
+       there once the control is on — but its line box does, or the rows below
+       it move. */
+    const note = () =>
+      page.evaluate(() => {
+        const el = document.querySelector(".field__note");
+        return {
+          shown: getComputedStyle(el).visibility === "visible",
+          height: Math.round(el.getBoundingClientRect().height),
+        };
+      });
+    const on = await note();
+    assert.equal(on.shown, false);
+    await drag("Clicks per beat", 3);
+    const offNote = await note();
+    assert.equal(offNote.shown, true);
+    assert.equal(offNote.height, on.height, "the slot kept its height");
+    await drag("Clicks per beat", 4);
     const swingName = () =>
       page.evaluate(() =>
         document.querySelectorAll(".field__value")[1].textContent.trim(),

@@ -2,6 +2,8 @@
    that keeps a live change from moving the beat. Pure — no audio context, no
    state; `now` is passed in. */
 
+import { STRAIGHT, swingApplies } from "./swing.js";
+
 /* Seconds per tick. */
 export const spt = (bpm, sub) => 60 / bpm / sub;
 
@@ -33,14 +35,17 @@ function tickPosition(t, anchor, bpm, sub) {
    anchor it has already passed. */
 const LEAD = 0.02;
 
-/* Re-bases the grid for a change of tempo, subdivision or swing.
-   `from` is the transport as the worklet currently understands it, plus the
-   `now` to measure against; `next` is the change. Returns what to send. */
-export function reanchor(from, next) {
+/* Re-bases the grid onto a new tempo, subdivision and swing.
+
+   `from` is the grid the worklet is on, plus the `now` to measure against; `to`
+   is the whole grid to move to, not a patch. It has to be whole: `from.swing`
+   is what the worklet was told, which is straight whenever the subdivision in
+   force could not carry swing, and reading a missing field out of it would
+   quietly throw away a setting the player still has set. */
+export function reanchor(from, to) {
   const { anchor, bpm: oldBpm, sub: oldSub, swing: oldSwing } = from;
-  const bpm = next.bpm ?? from.bpm;
-  const sub = next.sub ?? from.sub;
-  const swing = swingApplies(sub) ? (next.swing ?? from.swing) : 50;
+  const { bpm, sub } = to;
+  const swing = swingApplies(sub) ? to.swing : STRAIGHT;
 
   /* The fractional position, not the tick it last sounded: rounding down and
      taking that tick's pair lands on a tick already played, and the worklet,
@@ -49,7 +54,7 @@ export function reanchor(from, next) {
   /* Swing splits a pair long-short, so a swinging transport can only be
      re-anchored on a pair boundary or the split moves. A straight one has no
      phase to keep and takes the very next tick. */
-  const step = oldSwing === 50 ? 1 : 2;
+  const step = oldSwing === STRAIGHT ? 1 : 2;
   let tick = step * Math.ceil(now / step);
   let time = timeAtTick(tick, anchor, oldBpm, oldSub, oldSwing);
 
@@ -62,7 +67,10 @@ export function reanchor(from, next) {
        position both grids agree on. */
     const exact = (tick / oldSub) * sub;
     const whole = Math.round(exact);
-    if (Math.abs(exact - whole) < 1e-9 && (swing === 50 || whole % 2 === 0)) {
+    if (
+      Math.abs(exact - whole) < 1e-9 &&
+      (swing === STRAIGHT || whole % 2 === 0)
+    ) {
       tick = whole;
     } else {
       const beat = Math.ceil(now / oldSub);
@@ -76,10 +84,6 @@ export function reanchor(from, next) {
 
 export const MIN_SUB = 1;
 export const MAX_SUB = 8;
-
-/* Swing splits a tick pair long-short, so it only means anything when the
-   clicks per beat divide into pairs — even subdivisions. */
-export const swingApplies = (sub) => sub >= 2 && sub % 2 === 0;
 
 /* A frame computed now reaches the screen a frame or two later, which reads as
    the dot lighting behind the click. Read the schedule slightly ahead to cover
