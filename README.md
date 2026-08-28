@@ -49,10 +49,10 @@ re-stamp anything.
 
 Two complementary mechanisms, because either alone has a blind spot:
 
-| Trigger | Catches |
-|---|---|
-| Worker version changed | any precached file — `BUILD` covers all of them |
-| Content diff on the shell | you edited `index.html` and forgot to rebuild |
+| Trigger                   | Catches                                         |
+| ------------------------- | ----------------------------------------------- |
+| Worker version changed    | any precached file — `BUILD` covers all of them |
+| Content diff on the shell | you edited `index.html` and forgot to rebuild   |
 
 The worker serves the cached shell, refetches `index.html` behind it, and
 messages the page only if the bytes actually differ. The page checks on launch,
@@ -62,7 +62,7 @@ button beside the version in the settings panel, and it is absent until then.
 The reload is always user-initiated, so a deploy never interrupts a running
 metronome.
 
-The first launch after a deploy is still served by the *old* worker, by design.
+The first launch after a deploy is still served by the _old_ worker, by design.
 It updates in the background and launch two is fast. Not a bug.
 
 ## Theming
@@ -81,7 +81,7 @@ and `swinfo`.
 
 The stylesheet deliberately has **no `prefers-color-scheme` query**. The OS is
 read from JS instead, so CSS only ever sees a settled theme, and so **System**
-can track the OS *live* — a machine flipping to dark at sunset moves the app
+can track the OS _live_ — a machine flipping to dark at sunset moves the app
 with it, no reload. An explicit Light or Dark outranks the OS and persists under
 `metro.theme`; cycling back to System clears the key.
 
@@ -100,19 +100,19 @@ The audio session is **playback**, so the click survives a screen lock, a
 backgrounded tab, and the ring/silent switch. A metronome that goes quiet
 because the phone is on silent is not much of a metronome.
 
-The price is that playback *is* the media channel: starting the click
+The price is that playback _is_ the media channel: starting the click
 interrupts whatever else was playing. That is not something this app can refine
 away. The combination you would want exists natively — `AVAudioSessionCategory`
-`Playback` with the `mixWithOthers` option mixes *and* ignores the switch — but
+`Playback` with the `mixWithOthers` option mixes _and_ ignores the switch — but
 the web cannot ask for it. WebKit never sets that option, and every session type
 reachable from the web that mixes maps to the same silence-obeying category:
 
-| `navigator.audioSession.type` | iOS category | mixes | ignores silent switch |
-| --- | --- | --- | --- |
-| `playback` | MediaPlayback | no | **yes** |
-| `ambient` | AmbientSound | **yes** | no |
-| `transient` | AmbientSound | **yes** | no |
-| `transient-solo` | SoloAmbientSound | no | no |
+| `navigator.audioSession.type` | iOS category     | mixes   | ignores silent switch |
+| ----------------------------- | ---------------- | ------- | --------------------- |
+| `playback`                    | MediaPlayback    | no      | **yes**               |
+| `ambient`                     | AmbientSound     | **yes** | no                    |
+| `transient`                   | AmbientSound     | **yes** | no                    |
+| `transient-solo`              | SoloAmbientSound | no      | no                    |
 
 `transient` reads like the exception — the spec has it mixing with playback
 audio — but it maps to the same category as `ambient` and behaves identically on
@@ -147,13 +147,13 @@ tools/build-site.sh assembles _site/ for deployment
 
 Cloudflare Workers (Static Assets), deployed from Git via Workers Builds.
 
-| Setting | Value |
-|---|---|
-| Build command | `bash tools/build-site.sh` |
-| Deploy command | `npx wrangler deploy` |
-| Path | `/` |
-| Non-production branch builds | off |
-| Cloudflare Access | off — it is a public app |
+| Setting                      | Value                      |
+| ---------------------------- | -------------------------- |
+| Build command                | `bash tools/build-site.sh` |
+| Deploy command               | `npx wrangler deploy`      |
+| Path                         | `/`                        |
+| Non-production branch builds | off                        |
+| Cloudflare Access            | off — it is a public app   |
 
 `tools/build-site.sh` runs `build.mjs --check` (so a stale precache list fails
 the deploy rather than breaking cold launches) and assembles `_site/`:
@@ -177,7 +177,7 @@ The manifest deliberately has **no `id`** — it then defaults to `start_url`,
 which is relative, keeping the app portable across paths. An explicit `"id"`
 of `/` would claim the origin root instead.
 
-An installed PWA is welded to the origin *and* scope it was installed from. If
+An installed PWA is welded to the origin _and_ scope it was installed from. If
 this ever moves, the old icon keeps opening the old origin's cached copy —
 moving it needs a real worker left behind at the old URLs, never a redirect.
 

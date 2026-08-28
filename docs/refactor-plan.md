@@ -98,7 +98,7 @@ Each step leaves the app running and `node tools/build.mjs --check` passing.
 1. **Tooling, and tests against the code as it stands.** `package.json`,
    Prettier, `node:test`, Puppeteer, and the local server that mimics
    Cloudflare's 307 on `/index.html`. Write the worklet and service-worker tests
-   *first*, against the current files, so the rewrite has something to be
+   _first_, against the current files, so the rewrite has something to be
    measured against rather than something to be trusted about.
 2. **Vendor Preact/hooks/htm as ESM** (`tools/vendor.mjs`).
 3. **Replace the canvas runtime.** New `index.html`, `ui/`, `metronome/`; styles
@@ -121,15 +121,15 @@ Each step leaves the app running and `node tools/build.mjs --check` passing.
 
 `node --test` for units, Puppeteer for the rest.
 
-| Suite | Asserts |
-|---|---|
-| `worklet` | N clicks per beat for subdivisions 1–8; accents exactly one bar apart; accents stay on the beat through an aggressive subdivision drag; swing < 50 places the off-tick early |
-| `timing` | anchor conversion takes the exact tick when there is one and the next beat otherwise |
-| `share` | round-trip; never throws on hostile input; clamps to 5–95 swing |
-| `pattern` | grouping parse, row wrapping, cycle order |
-| `tempo` | tap outlier rejection |
-| `hold-repeat` | ramp is monotonic, starts at one step, reaches the ceiling |
-| `layout` | transport and tempo do not move across beat counts 1–24; fits at 629/667/745/812; panel rows identical across clicks-per-beat 1–8 |
+| Suite            | Asserts                                                                                                                                                                          |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worklet`        | N clicks per beat for subdivisions 1–8; accents exactly one bar apart; accents stay on the beat through an aggressive subdivision drag; swing < 50 places the off-tick early     |
+| `timing`         | anchor conversion takes the exact tick when there is one and the next beat otherwise                                                                                             |
+| `share`          | round-trip; never throws on hostile input; clamps to 5–95 swing                                                                                                                  |
+| `pattern`        | grouping parse, row wrapping, cycle order                                                                                                                                        |
+| `tempo`          | tap outlier rejection                                                                                                                                                            |
+| `hold-repeat`    | ramp is monotonic, starts at one step, reaches the ceiling                                                                                                                       |
+| `layout`         | transport and tempo do not move across beat counts 1–24; fits at 629/667/745/812; panel rows identical across clicks-per-beat 1–8                                                |
 | `service-worker` | normal load; hostile origin where even `./` redirects; missing precache asset fails install and leaves the cache empty; offline launch; update detection with a simulated deploy |
 
 Geometry is measured, not screenshot-diffed. `chrome-headless-shell` needs an
@@ -138,15 +138,15 @@ explicit `executablePath`; synthetic `blur`/`visibilitychange` need
 
 ## Payload projection
 
-| | now | after |
-|---|---|---|
-| `support.js` | 69KB | — |
-| preact vendor | 27KB | ~17KB (preact + hooks + htm, ESM) |
-| `index.html` | 32KB | ~5KB |
-| app code | 32KB | ~45KB (`metronome/` + `ui/`, was partly inside index.html) |
-| CSS | 16KB | ~14KB (tokens + base + app) |
-| fonts + icons | 73KB | 73KB |
-| **total** | **241KB** | **~155KB** |
+|               | now       | after                                                      |
+| ------------- | --------- | ---------------------------------------------------------- |
+| `support.js`  | 69KB      | —                                                          |
+| preact vendor | 27KB      | ~17KB (preact + hooks + htm, ESM)                          |
+| `index.html`  | 32KB      | ~5KB                                                       |
+| app code      | 32KB      | ~45KB (`metronome/` + `ui/`, was partly inside index.html) |
+| CSS           | 16KB      | ~14KB (tokens + base + app)                                |
+| fonts + icons | 73KB      | 73KB                                                       |
+| **total**     | **241KB** | **~155KB**                                                 |
 
 Caprasimo stays. It is 21KB, precached once, `font-display: swap`, and it is the
 app's identity — cutting it is a design change, not an optimisation.

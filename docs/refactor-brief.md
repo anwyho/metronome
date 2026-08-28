@@ -20,15 +20,15 @@ separated from effects.
 
 241KB precached across 15 files:
 
-| | |
-|---|---|
-| `support.js` | 69KB / 1911 lines |
-| `metronome-core.js` | 32KB / 927 lines |
-| `index.html` | 32KB / 420 lines |
-| fonts | 41KB (2 woff2, latin subset) |
-| preact vendor | 27KB (preact + hooks + compat) |
-| `ds/styles.css` | 16KB |
-| icons | 32KB |
+|                     |                                |
+| ------------------- | ------------------------------ |
+| `support.js`        | 69KB / 1911 lines              |
+| `metronome-core.js` | 32KB / 927 lines               |
+| `index.html`        | 32KB / 420 lines               |
+| fonts               | 41KB (2 woff2, latin subset)   |
+| preact vendor       | 27KB (preact + hooks + compat) |
+| `ds/styles.css`     | 16KB                           |
+| icons               | 32KB                           |
 
 No package.json, no bundler, no tests, no lint. "The whole app is plain files"
 is a deliberate, stated property — see README "Run it".
@@ -85,7 +85,7 @@ other goal. Do it first and the rest follows.
    Precaching only the first-paint set is possible — but the offline guarantee is
    a stated feature, so do not silently weaken it.
 
-6. **README.** Open by explaining what the project *is* — a PWA template with a
+6. **README.** Open by explaining what the project _is_ — a PWA template with a
    metronome as its reference app — and how to reuse the skeleton. Keep the
    existing mechanism docs (updates, theming, sound-and-screen, deploy); they are
    correct and were expensive to learn.
@@ -93,7 +93,7 @@ other goal. Do it first and the rest follows.
 ## Feature changes wanted alongside the refactor
 
 - **Press-and-hold on the BPM − / + buttons.** A tap still moves one BPM. Holding
-  starts repeating after a short delay and *accelerates* — slow at first, then
+  starts repeating after a short delay and _accelerates_ — slow at first, then
   progressively faster, so a long press crosses the range without becoming
   uncontrollable near the start. Release, pointer-cancel and pointer-leave all
   stop it. The ramp should be a pure function of hold duration so it can be unit
@@ -184,7 +184,7 @@ Notes: chrome-headless-shell needs an explicit `executablePath`, and synthetic
 
 Working tree clean, `node tools/build.mjs --check` passing, deploy green, and the
 app verified in a browser — not just in tests. Commit in reviewable steps with
-messages explaining *why*, matching the existing history's style.
+messages explaining _why_, matching the existing history's style.
 
 ## Decide and state explicitly
 

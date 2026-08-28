@@ -8,24 +8,24 @@
    update would never ship. */
 
 /* @generated-begin */
-const VERSION = '260828.0006';
-const BUILD = 'acca40a5088a';
+const VERSION = "260828.0931";
+const BUILD = "500241ae0164";
 const PRECACHE = [
-  './',
-  'app.js',
-  'ds/styles.css',
-  'fonts/caprasimo-latin.woff2',
-  'fonts/figtree-latin.woff2',
-  'icons/apple-touch-icon.png',
-  'icons/icon-192.png',
-  'icons/icon-512.png',
-  'icons/maskable-512.png',
-  'manifest.webmanifest',
-  'metronome-core.js',
-  'support.js',
-  'vendor/preact-compat.umd.js',
-  'vendor/preact-hooks.umd.js',
-  'vendor/preact.umd.js',
+  "./",
+  "app.js",
+  "ds/styles.css",
+  "fonts/caprasimo-latin.woff2",
+  "fonts/figtree-latin.woff2",
+  "icons/apple-touch-icon.png",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "icons/maskable-512.png",
+  "manifest.webmanifest",
+  "metronome-core.js",
+  "support.js",
+  "vendor/preact-compat.umd.js",
+  "vendor/preact-hooks.umd.js",
+  "vendor/preact.umd.js",
 ];
 /* @generated-end */
 

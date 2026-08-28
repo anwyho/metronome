@@ -1,0 +1,16 @@
+_site/
+node_modules/
+vendor/
+ds/
+fonts/
+icons/
+
+# Vendored verbatim; reformatting it would lose the "unmodified" property.
+support.js
+
+# Wrangler reads JSONC, but a trailing comma is not worth a deploy-day surprise.
+wrangler.jsonc
+
+# The canvas template: `{{ }}` holes inside style attributes are not obviously
+# safe to reflow, and step 3 replaces the file outright. Drop this line then.
+index.html

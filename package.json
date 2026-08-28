@@ -1,0 +1,21 @@
+{
+  "name": "metronome-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An offline-first PWA template, with a metronome as its reference app.",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "check": "node tools/build.mjs --check",
+    "vendor": "node tools/vendor.mjs",
+    "site": "bash tools/build-site.sh",
+    "serve": "node tools/serve.mjs",
+    "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "puppeteer": "^24.15.0"
+  }
+}
