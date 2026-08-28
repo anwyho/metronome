@@ -10,8 +10,8 @@
    how responses are served rekeys the cache too. */
 
 /* @generated-begin */
-const VERSION = "260828.1004";
-const BUILD = "070480c9a07c";
+const VERSION = "260828.1008";
+const BUILD = "7a308cc5d241";
 const PRECACHE = [
   "./",
   "fonts/caprasimo-latin.woff2",

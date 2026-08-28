@@ -4,6 +4,7 @@ import {
   MIN_SWING,
   PRESETS,
   STRAIGHT,
+  pairPosition,
   swingFraction,
   swingName,
 } from "../../metronome/swing.js";
@@ -11,11 +12,10 @@ import { swingApplies } from "../../metronome/timing.js";
 
 export function SwingControl({ swing, sub, onChange }) {
   const off = !swingApplies(sub);
-  const fraction = swingFraction(swing);
-  /* The pair track is 24px of dot travelling across its own width, so the
-     swung dot's left edge is the swing fraction of the track less the part of
-     the dot already past it. */
-  const swungLeft = `calc(${(fraction * 100).toFixed(1)}% - ${(fraction * 24 - 10).toFixed(0)}px)`;
+  /* The dot's left edge runs from 10px at the pair's start to 14px short of
+     the far end, so it stays inside the track at both extremes. */
+  const at = pairPosition(swing);
+  const swungLeft = `calc(${(at * 100).toFixed(1)}% - ${(at * 24 - 10).toFixed(1)}px)`;
 
   return html`
     <div class="field" data-disabled=${off ? "" : null}>

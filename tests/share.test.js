@@ -25,6 +25,8 @@ describe("share", () => {
         swing: 67,
       },
       { bpm: 20, beats: ["accent", "normal"], sub: 8, swing: 50 },
+      /* Under 50 the off-tick lands early. */
+      { bpm: 88, beats: ["accent", "normal", "normal"], sub: 2, swing: 33 },
     ]) {
       assert.deepEqual(parseHash("#" + serializeHash(state)), state);
     }
@@ -53,8 +55,8 @@ describe("share", () => {
     assert.equal(parseHash("#bpm=99999").bpm, 999);
     assert.equal(parseHash("#sub=0").sub, 1);
     assert.equal(parseHash("#sub=99").sub, 8);
-    assert.equal(parseHash("#swing=0").swing, 50);
-    assert.equal(parseHash("#swing=100").swing, 75);
+    assert.equal(parseHash("#swing=0").swing, 5);
+    assert.equal(parseHash("#swing=100").swing, 95);
     assert.equal(parseHash("#beats=" + "o".repeat(40)).beats.length, 24);
     assert.equal(parseHash("#beats=o").beats.length, 2);
   });

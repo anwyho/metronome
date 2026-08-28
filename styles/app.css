@@ -72,10 +72,6 @@
     background: var(--color-neutral-100);
     border-radius: var(--radius-lg);
   }
-
-  .chevron {
-    display: none;
-  }
 }
 
 /* ── the beat grid ─────────────────────────────────────────────────────── */
@@ -345,6 +341,15 @@
   align-items: center;
   justify-content: center;
   color: var(--color-neutral-600);
+}
+
+/* The panel is beside the transport at this width, so there is nothing below
+   to scroll to. Declared after `.chevron` — the rule that wins between two of
+   equal specificity is the later one, and this one has to. */
+@media (min-width: 820px) {
+  .chevron {
+    display: none;
+  }
 }
 
 /* ── settings panel ────────────────────────────────────────────────────── */

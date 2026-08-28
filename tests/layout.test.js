@@ -86,6 +86,28 @@ describe("layout", () => {
     });
   }
 
+  it("puts the panel beside the transport once there is room", async () => {
+    const page = await h.page();
+    await page.setViewport({ width: 1100, height: 800, deviceScaleFactor: 2 });
+    await page.goto(h.server.url, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => /beats/.test(document.body.innerText));
+    await settle(page, 4);
+
+    const side = await page.evaluate(() => {
+      const main = document.querySelector(".main").getBoundingClientRect();
+      const panel = document.querySelector(".panel").getBoundingClientRect();
+      const chevron = document.querySelector(".chevron");
+      return {
+        beside: panel.left >= main.right,
+        /* Nothing below to scroll to, so the affordance that scrolls there has
+           no business being on screen. */
+        chevron: getComputedStyle(chevron).display,
+      };
+    });
+    assert.deepEqual(side, { beside: true, chevron: "none" });
+    await page.close();
+  });
+
   it("keeps every panel row the same height at every subdivision", async () => {
     const page = await open();
     const rows = async () =>

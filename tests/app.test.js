@@ -180,12 +180,24 @@ describe("app", () => {
     assert.equal(await disabled(), true);
     await drag("Clicks per beat", 4);
     assert.equal(await disabled(), false);
-    await drag("Swing", 67);
-    assert.equal(
-      await page.evaluate(() =>
+    const swingName = () =>
+      page.evaluate(() =>
         document.querySelectorAll(".field__value")[1].textContent.trim(),
-      ),
-      "Swing",
+      );
+    await drag("Swing", 67);
+    assert.equal(await swingName(), "Swing");
+    /* Under 50 the off-tick lands early, and the name says which side of
+       straight it is on. */
+    await drag("Swing", 33);
+    assert.equal(await swingName(), "Reverse swing");
+    await drag("Swing", 5);
+    assert.equal(await swingName(), "5%");
+    assert.deepEqual(
+      await page.evaluate(() => {
+        const el = document.querySelector('input[aria-label="Swing"]');
+        return { min: el.min, max: el.max };
+      }),
+      { min: "5", max: "95" },
     );
     /* Dropping back to a subdivision that cannot swing leaves the value in the
        link but stops applying it. */
