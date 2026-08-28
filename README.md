@@ -150,7 +150,14 @@ moving it needs a real worker left behind at the old URLs, never a redirect.
 
 ## Provenance
 
-Extracted from a Claude Design canvas export (`Metronome PWA prototype.zip`).
+Extracted from a Claude Design canvas export. The export is not in the working
+tree — it is a 64KB build input, not a shipped file — but it is in history at
+commit 46a56fa, the commit before the one that removed it:
+
+```sh
+git show 46a56fa:"Metronome PWA prototype.zip" > prototype.zip
+```
+
 The export held four artboards; only **Metronome B** — the settled direction —
 is the app. The canvas demo page and the A/C exploration variants are not part
 of this repo.
