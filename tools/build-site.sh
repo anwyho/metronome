@@ -11,7 +11,7 @@ mkdir -p _site/metronome
 # Everything the app is made of. Kept in step with tools/build.mjs's skip list:
 # what is precached is what is copied.
 cp -R index.html sw.js manifest.webmanifest \
-      pwa metronome ui styles vendor ds fonts icons _site/metronome/
+      pwa metronome ui styles vendor fonts icons _site/metronome/
 cp _headers _site/_headers
 
 # The copy list above is written by hand; the precache list is generated. A

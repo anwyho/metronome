@@ -10,11 +10,10 @@
    how responses are served rekeys the cache too. */
 
 /* @generated-begin */
-const VERSION = "260828.0957";
-const BUILD = "ec273568c2e1";
+const VERSION = "260828.0959";
+const BUILD = "f7a86ee6a8c2";
 const PRECACHE = [
   "./",
-  "ds/styles.css",
   "fonts/caprasimo-latin.woff2",
   "fonts/figtree-latin.woff2",
   "icons/apple-touch-icon.png",
@@ -39,6 +38,7 @@ const PRECACHE = [
   "pwa/updates.js",
   "styles/app.css",
   "styles/base.css",
+  "styles/tokens.css",
   "ui/App.js",
   "ui/components/BeatGrid.js",
   "ui/components/CountInButton.js",

@@ -46,8 +46,7 @@ function walk(dir) {
 /* Build sources, not shipped files: the .svg icons are what the .png the app
    references were drawn from, and pwa/theme-boot.js is the source the inline
    snippet in index.html is checked against. */
-const SOURCES = (f) =>
-  f.startsWith("ds/README") || f.endsWith(".svg") || f === "pwa/theme-boot.js";
+const SOURCES = (f) => f.endsWith(".svg") || f === "pwa/theme-boot.js";
 
 const files = walk(ROOT)
   .map((f) => relative(ROOT, f).split("\\").join("/"))
