@@ -9,7 +9,7 @@
 
 /* @generated-begin */
 const VERSION = "260828.0931";
-const BUILD = "a54bf6961fa8";
+const BUILD = "54fdcdd53303";
 const PRECACHE = [
   "./",
   "app.js",
@@ -92,7 +92,7 @@ self.addEventListener("activate", (event) => {
    bytes differ. Freshness is deliberately not the fetch strategy: paying
    network latency on every launch to catch a deploy-day change is the trade
    that makes a slow network feel like a broken app. */
-async function refreshShell(servedCopy) {
+async function refreshShell(servedCopy, clientId) {
   const served = await servedCopy.text();
   const res = await fetch(SHELL, { cache: "no-store" });
   if (!res.ok) return;
@@ -100,9 +100,22 @@ async function refreshShell(servedCopy) {
   const text = await res.text();
   if (text === served) return;
   await (await caches.open(CACHE)).put(SHELL, unredirected(fresh));
-  for (const client of await self.clients.matchAll()) {
+  for (const client of await clientFor(clientId)) {
     client.postMessage({ type: "content-updated" });
   }
+}
+
+/* The document this navigation is creating does not exist yet, and matchAll
+   answers with the one it replaces — which is torn down before it can read
+   anything. clients.get() on the reserved id stays empty until the new
+   document is there to hear it. */
+async function clientFor(id) {
+  for (let i = 0; id && i < 30; i++) {
+    const client = await self.clients.get(id);
+    if (client) return [client];
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return self.clients.matchAll();
 }
 
 /* The page asks on load so it can show which build it is running, and again
@@ -133,7 +146,9 @@ self.addEventListener("fetch", (event) => {
           /* Clone before returning: once the response is handed to respondWith
            its body is locked and clone() throws — inside waitUntil, where the
            rejection is invisible and the cache silently stops refreshing. */
-          event.waitUntil(refreshShell(hit.clone()).catch(() => {}));
+          event.waitUntil(
+            refreshShell(hit.clone(), event.resultingClientId).catch(() => {}),
+          );
           /* Clone first: unredirected() reads the body to rebuild it. */
           return unredirected(hit);
         }

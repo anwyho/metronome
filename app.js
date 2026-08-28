@@ -46,6 +46,14 @@
       set({ version: e.data.version, build: e.data.build });
   });
 
+  /* addEventListener alone leaves this queue disabled — only assigning
+     onmessage or calling startMessages() opens it — so a content-updated
+     posted while the page was still parsing was queued and never delivered,
+     and the shell-diff half of update detection never fired. The version
+     readout was unaffected: it answers on a MessageChannel port, which has no
+     such gate. */
+  if (sw.startMessages) sw.startMessages();
+
   function askVersion() {
     if (!sw.controller) return;
     var ch = new MessageChannel();
