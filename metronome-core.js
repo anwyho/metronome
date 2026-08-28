@@ -570,14 +570,19 @@ registerProcessor('click-processor', ClickProcessor);
         oldB = this.abpm,
         oldS = this.asub,
         oldSw = this.aswing;
-      const nowTick = this.tickAtTime(
-        this.ctx.currentTime + 0.02,
-        a,
-        oldB,
-        oldS,
-        oldSw,
-      );
-      let atick = 2 * Math.ceil(nowTick / 2);
+      /* Where the transport is now, as a fraction of a tick — not the tick it
+         last sounded. Taking the pair that *contains* the position lands on a
+         tick already played, and the worklet, told to resume there, plays it
+         again: a doubled click under every tempo tap made in the first half of
+         a pair. */
+      const now =
+        a.tick + (this.ctx.currentTime + 0.02 - a.time) / this.spt(oldB, oldS);
+      /* Swing splits a tick pair long-short, so a swinging transport can only
+         be re-anchored on a pair boundary or the split moves. A straight one
+         has no phase to keep and takes the very next tick, so the change is
+         heard on the next click rather than up to a pair later. */
+      const step = oldSw === 50 ? 1 : 2;
+      let atick = step * Math.ceil(now / step);
       let atime = this.timeAtTick(atick, a, oldB, oldS, oldSw);
       const bpm = next.bpm !== undefined ? next.bpm : this.s.bpm;
       const sub = next.sub !== undefined ? next.sub : this.s.sub;
@@ -600,7 +605,7 @@ registerProcessor('click-processor', ClickProcessor);
         ) {
           atick = whole;
         } else {
-          const beat = Math.ceil(nowTick / oldS);
+          const beat = Math.ceil(now / oldS);
           atick = beat * sub;
           atime = this.timeAtTick(beat * oldS, a, oldB, oldS, oldSw);
         }
