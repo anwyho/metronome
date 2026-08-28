@@ -1,8 +1,12 @@
 # Served from the assets root. Paths are absolute URL paths, so they carry the
 # /metronome prefix the app is deployed under.
 
-# A cached worker script is an app that can never update.
+# A cached worker script is an app that can never update. The runtime it
+# imports joins the worker's stored scripts, and is compared on the same check.
 /metronome/sw.js
+  Cache-Control: no-cache
+
+/metronome/pwa/sw-runtime.js
   Cache-Control: no-cache
 
 # The shell is what the worker diffs to detect a deploy, so it must not be

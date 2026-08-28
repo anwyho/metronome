@@ -41,15 +41,10 @@
       crossorigin
     />
 
+    <!-- Inline, because it has to land ahead of first paint. The source of
+         truth is pwa/theme-boot.js; `node tools/build.mjs --check` fails if
+         this copy has drifted from it. -->
     <script>
-      /* Resolves the theme and stamps <html> before first paint, so a dark
-         launch never flashes cream. Inline for that reason — a <script src>
-         would be a network round trip ahead of the paint on a cold load.
-
-         `pref` is the choice of the three; `resolved` is the light or dark it
-         currently means. The OS query lives here rather than in the stylesheet
-         so that CSS only ever sees a settled [data-theme], and so 'system' can
-         follow the OS live. */
       (function () {
         var KEY = "metro.theme";
         var GROUND = { light: "#f5ead8", dark: "#1a1714" };
@@ -103,7 +98,7 @@
 
     <!-- Registration runs during parse, so the worker is already being checked
          while the module graph is still loading. -->
-    <script src="app.js"></script>
+    <script src="pwa/register.js"></script>
     <script type="module" src="ui/main.js"></script>
   </head>
   <body>

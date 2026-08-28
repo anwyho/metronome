@@ -77,7 +77,11 @@ describe("service worker", () => {
   });
 
   it("fails the install and leaves nothing cached when a file is missing", async () => {
-    h.server.state.missing.add("app.js");
+    /* Taken from the list rather than named, so renaming a file cannot quietly
+       turn this scenario into "nothing was missing". */
+    const victim = PRECACHE.find((p) => p !== "./");
+    assert.ok(victim, "the precache has a file to remove");
+    h.server.state.missing.add(victim);
     try {
       const page = await h.page();
       assert.equal(await load(page), false, "the install did not complete");
@@ -88,7 +92,7 @@ describe("service worker", () => {
       assert.deepEqual((await cacheKeys(page)) ?? [], []);
       await page.close();
     } finally {
-      h.server.state.missing.delete("app.js");
+      h.server.state.missing.delete(victim);
     }
   });
 

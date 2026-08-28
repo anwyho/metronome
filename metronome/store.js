@@ -2,6 +2,7 @@
    them and the engine. Replaces the state object with a new one on every
    change and tells its subscribers, so the UI can compare by identity. */
 
+import { installContext } from "../pwa/install.js";
 import { createEngine, supported } from "./engine.js";
 import { createPrefs } from "./prefs.js";
 import { cycleBeat, resize } from "./pattern.js";
@@ -260,14 +261,7 @@ export function createStore({
 
   function mount() {
     if (state.unsupported) return;
-    try {
-      set({
-        standalone: matchMedia("(display-mode: standalone)").matches,
-        /* The hint is Share-sheet instructions, which only mean anything on a
-           touch device — iOS has no programmatic install to offer instead. */
-        touch: matchMedia("(pointer: coarse)").matches,
-      });
-    } catch {}
+    set(installContext());
 
     const saved = prefs.read();
     if (typeof saved.volume === "number") set({ volume: saved.volume });

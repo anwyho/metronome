@@ -1,9 +1,12 @@
 import { useEffect, useState } from "../../vendor/hooks.module.js";
+import {
+  applyUpdate,
+  onWorkerInfo,
+  updateReady,
+  workerVersion,
+} from "../../pwa/updates.js";
 
-const read = () => ({
-  version: window.__swInfo?.version ?? null,
-  update: !!window.__swInfo?.update,
-});
+const read = () => ({ version: workerVersion(), update: updateReady() });
 
 /* Registration and update detection run outside the app, so the worker is
    already being checked while this is still parsing. All the UI does is read
@@ -12,9 +15,8 @@ export function useServiceWorker() {
   const [info, setInfo] = useState(read);
   useEffect(() => {
     const sync = () => setInfo(read());
-    addEventListener("swinfo", sync);
     sync();
-    return () => removeEventListener("swinfo", sync);
+    return onWorkerInfo(sync);
   }, []);
-  return { ...info, apply: () => window.__applyUpdate?.() };
+  return { ...info, apply: applyUpdate };
 }

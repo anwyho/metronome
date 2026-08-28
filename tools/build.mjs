@@ -43,13 +43,36 @@ function walk(dir) {
   return out;
 }
 
+/* Build sources, not shipped files: the .svg icons are what the .png the app
+   references were drawn from, and pwa/theme-boot.js is the source the inline
+   snippet in index.html is checked against. */
+const SOURCES = (f) =>
+  f.startsWith("ds/README") || f.endsWith(".svg") || f === "pwa/theme-boot.js";
+
 const files = walk(ROOT)
   .map((f) => relative(ROOT, f).split("\\").join("/"))
-  /* the .svg icons are build sources for the .png the app actually references */
-  .filter(
-    (f) =>
-      !SKIP_FILES.has(f) && !f.startsWith("ds/README") && !f.endsWith(".svg"),
+  .filter((f) => !SKIP_FILES.has(f) && !SOURCES(f));
+
+/* The theme has to be resolved and stamped on <html> before first paint, which
+   rules out a <script src>, so index.html carries a copy of the boot script.
+   Two copies drift; this is what notices. Whitespace is collapsed before
+   comparing, because Prettier lays the same code out differently at the two
+   indentation depths. */
+const bare = (text) => text.replace(/\s+/g, " ").trim();
+
+const boot = readFileSync(join(ROOT, "pwa/theme-boot.js"), "utf8");
+const inlined = readFileSync(join(ROOT, "index.html"), "utf8").match(
+  /<script>\n([\s\S]*?)\n *<\/script>/,
+);
+if (
+  !inlined ||
+  bare(inlined[1]) !== bare(boot.slice(boot.indexOf("(function")))
+) {
+  console.error(
+    "the inline theme boot in index.html no longer matches pwa/theme-boot.js",
   );
+  process.exit(1);
+}
 
 /* index.html is precached as './' and only as './' — see the SHELL note in
    sw.js. It stays in `files`, so an HTML-only edit still bumps BUILD. */

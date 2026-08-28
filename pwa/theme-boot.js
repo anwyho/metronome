@@ -1,0 +1,56 @@
+/* Resolves the theme and stamps <html> before first paint, so a dark launch
+   never flashes cream.
+
+   This file is the source of truth for a snippet that has to be INLINE in the
+   head — a <script src> would be a network round trip ahead of the paint on a
+   cold load. `tools/build.mjs --check` fails if the copy in index.html has
+   drifted from this one. It is not shipped.
+
+   `pref` is the choice of the three; `resolved` is the light or dark it
+   currently means. The OS query lives here rather than in the stylesheet so
+   that CSS only ever sees a settled [data-theme], and so 'system' can follow
+   the OS live. */
+(function () {
+  var KEY = "metro.theme";
+  var GROUND = { light: "#f5ead8", dark: "#1a1714" };
+  var ORDER = ["system", "light", "dark"];
+  var mq = matchMedia("(prefers-color-scheme: dark)");
+  var pref;
+  try {
+    pref = localStorage.getItem(KEY);
+  } catch (e) {}
+  if (ORDER.indexOf(pref) < 1) pref = "system";
+
+  function apply() {
+    var resolved = pref === "system" ? (mq.matches ? "dark" : "light") : pref;
+    document.documentElement.setAttribute("data-theme", resolved);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = GROUND[resolved];
+    api.pref = pref;
+    api.resolved = resolved;
+    dispatchEvent(new Event("themechange"));
+  }
+
+  var api = (window.__theme = {
+    pref: pref,
+    resolved: "light",
+    order: ORDER,
+    set: function (p) {
+      pref = ORDER.indexOf(p) < 0 ? "system" : p;
+      try {
+        if (pref === "system") localStorage.removeItem(KEY);
+        else localStorage.setItem(KEY, pref);
+      } catch (e) {}
+      apply();
+    },
+    cycle: function () {
+      api.set(ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]);
+    },
+  });
+
+  /* An explicit Light or Dark outranks the OS; only 'system' tracks it. */
+  mq.addEventListener("change", function () {
+    if (pref === "system") apply();
+  });
+  apply();
+})();
