@@ -32,9 +32,16 @@ const files = walk(ROOT)
   /* the .svg icons are build sources for the .png the app actually references */
   .filter((f) => !SKIP_FILES.has(f) && !f.startsWith('ds/README') && !f.endsWith('.svg'));
 
+/* index.html is precached as './' and only as './' — see the SHELL note in
+   sw.js. It stays in `files`, so an HTML-only edit still bumps BUILD. */
+const precache = ['./', ...files.filter((f) => f !== 'index.html')];
+
 /* Hash the file *contents*, not just the names: an HTML- or CSS-only edit has
-   to bump the version too, or a copy change ships to nobody. */
+   to bump the version too, or a copy change ships to nobody. The precache list
+   goes in as well, so changing what the worker caches rekeys the cache and
+   retires the old one rather than leaving orphans in it. */
 const h = createHash('sha256');
+h.update(precache.join('\n'));
 for (const f of files) {
   h.update(f);
   h.update(readFileSync(join(ROOT, f)));
@@ -59,12 +66,11 @@ function stampedVersion() {
 }
 const version = stampedVersion();
 
-const list = files.map((f) => `  '${f}',`).join('\n');
+const list = precache.map((f) => `  '${f}',`).join('\n');
 const block = `/* @generated-begin */
 const VERSION = '${version}';
 const BUILD = '${build}';
 const PRECACHE = [
-  './',
 ${list}
 ];
 /* @generated-end */`;
@@ -75,9 +81,9 @@ if (process.argv.includes('--check')) {
     console.error('sw.js is stale — run `node tools/build.mjs`');
     process.exit(1);
   }
-  console.log(`sw.js up to date — version ${version}, build ${build}, ${files.length} precached`);
+  console.log(`sw.js up to date — version ${version}, build ${build}, ${precache.length} precached`);
 } else {
   writeFileSync(swPath, next);
-  console.log(`sw.js updated — version ${version}, build ${build}, ${files.length} precached`);
-  for (const f of files) console.log('  ' + f);
+  console.log(`sw.js updated — version ${version}, build ${build}, ${precache.length} precached`);
+  for (const f of precache) console.log('  ' + f);
 }

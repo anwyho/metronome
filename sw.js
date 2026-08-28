@@ -2,13 +2,14 @@
    The block below is generated — run `node tools/build.mjs` after changing any
    shipped file. `node tools/build.mjs --check` fails if stale.
 
-   VERSION is the calendar date, for humans. BUILD is a hash of every precached
-   byte and is what actually keys the cache: two deploys on one day share a
-   VERSION, so keying on it would leave sw.js identical and never update. */
+   VERSION is the calendar date, for humans. BUILD hashes every precached byte
+   and the precache list, and is what actually keys the cache: two deploys on
+   one day share a VERSION, so keying on it would leave sw.js identical and the
+   update would never ship. */
 
 /* @generated-begin */
-const VERSION = '260827.2140';
-const BUILD = 'd63858de6a18';
+const VERSION = '260827.2157';
+const BUILD = '75c147d01832';
 const PRECACHE = [
   './',
   'app.js',
@@ -19,7 +20,6 @@ const PRECACHE = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/maskable-512.png',
-  'index.html',
   'manifest.webmanifest',
   'metronome-core.js',
   'support.js',
@@ -30,7 +30,10 @@ const PRECACHE = [
 /* @generated-end */
 
 const CACHE = "metronome-" + BUILD;
-const SHELL = "index.html";
+/* './', not 'index.html': the origin 307s /index.html to the directory form, so
+   a fetch of it resolves with the redirect flag set, and a response carrying
+   that flag is rejected outright when it answers a navigation. */
+const SHELL = "./";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

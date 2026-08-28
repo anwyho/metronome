@@ -35,7 +35,8 @@ node tools/build.mjs --check  # exit 1 if stale; runs in the deploy build
 
 - **`VERSION`** is `yymmdd.hhmm`, local time, and is what the app shows in its
   settings panel. It is for humans.
-- **`BUILD`** is a hash of every precached byte and is what actually keys the
+- **`BUILD`** is a hash of every precached byte, plus the precache list
+  itself, and is what actually keys the
   cache. It exists because a timestamp can repeat — two builds in one minute
   would leave `sw.js` byte-identical and the update would silently not ship.
 
