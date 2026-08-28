@@ -19,6 +19,8 @@
 }
 
 :root {
+  color-scheme: light;
+
   --color-bg: #f5ead8;
   --color-surface: #ebddc5;
   --color-text: #201e1d;
@@ -78,6 +80,58 @@
   --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+}
+
+/* Dark ground. The ramps run end-for-end against the light ones — 100 is the
+   step nearest the ground and 900 the far extreme in both themes — so every
+   token usage inverts on its own and no component needs a dark-mode rule.
+   `data-theme` is always resolved to light or dark by the boot script, which
+   is why there is no prefers-color-scheme query here. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #1a1714;
+  --color-surface: #2a2521;
+  --color-text: #f2e9db;
+  --color-accent: #f6a06b;
+  --color-accent-2: #aebf92;
+  --color-divider: color-mix(in srgb, #f2e9db 16%, transparent);
+
+  --color-neutral-100: #221e1a;
+  --color-neutral-200: #2e2823;
+  --color-neutral-300: #3d352e;
+  --color-neutral-400: #574d43;
+  --color-neutral-500: #7a7062;
+  --color-neutral-600: #9d9284;
+  --color-neutral-700: #bfb4a4;
+  --color-neutral-800: #ddd2c1;
+  --color-neutral-900: #f2e9db;
+
+  --color-accent-100: #2a1409;
+  --color-accent-200: #3d1d0d;
+  --color-accent-300: #572a13;
+  --color-accent-400: #7a3d1c;
+  --color-accent-500: #a65729;
+  --color-accent-600: #cf7640;
+  --color-accent-700: #ef9a63;
+  --color-accent-800: #ffc3a0;
+  --color-accent-900: #ffe3d2;
+
+  --color-accent-2-100: #1b2113;
+  --color-accent-2-200: #262e1a;
+  --color-accent-2-300: #384425;
+  --color-accent-2-400: #4e5e35;
+  --color-accent-2-500: #6b7d4b;
+  --color-accent-2-600: #8a9c67;
+  --color-accent-2-700: #a8bb87;
+  --color-accent-2-800: #c6d6a8;
+  --color-accent-2-900: #e3edcd;
+
+  /* An ink shadow is invisible on this ground, so elevation is carried by a
+     hairline edge with the ambient darkness behind it. */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #000 50%, transparent), 0 0 0 1px color-mix(in srgb, #f2e9db 7%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #000 55%, transparent), 0 0 0 1px color-mix(in srgb, #f2e9db 8%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #000 60%, transparent), 0 0 0 1px color-mix(in srgb, #f2e9db 9%, transparent);
 }
 
 body {

@@ -62,6 +62,35 @@ interrupts a running metronome.
 The first launch after a deploy is still served by the *old* worker, by design.
 It updates in the background and launch two is fast. Not a bug.
 
+## Theming
+
+Light and dark, cycling **System → Light → Dark** from the button in the
+settings panel. `ds/styles.css` carries both grounds as token blocks and the
+markup names no colour directly, so the two themes differ by nothing but the
+`data-theme` on `<html>`.
+
+An inline script in the head of `index.html` resolves the choice and stamps that
+attribute. It is inline because it has to land ahead of the first paint, and a
+`<script src>` would be a network round trip in front of it. It exposes
+`window.__theme` — `pref`, `resolved`, `set`, `cycle` — and fires a
+`themechange` event the template re-renders on, the same shape as `__swInfo`
+and `swinfo`.
+
+The stylesheet deliberately has **no `prefers-color-scheme` query**. The OS is
+read from JS instead, so CSS only ever sees a settled theme, and so **System**
+can track the OS *live* — a machine flipping to dark at sunset moves the app
+with it, no reload. An explicit Light or Dark outranks the OS and persists under
+`metro.theme`; cycling back to System clears the key.
+
+That key is separate from `metro.prefs.<id>` because the latter is scoped by an
+`instanceId` that is a template prop — the boot script cannot know it before the
+template mounts. `metronome-core.js` has no part in any of this.
+
+The in-page `theme-color` meta is rewritten on every change, so the iOS status
+bar tracks the theme. The manifest's `theme_color` and `background_color` cannot
+— they are read once, at install — so an installed app's launch splash stays
+cream whichever theme is active.
+
 ## Layout
 
 ```

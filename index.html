@@ -17,6 +17,55 @@
 
 <link rel="preload" as="font" type="font/woff2" href="fonts/figtree-latin.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="fonts/caprasimo-latin.woff2" crossorigin>
+<script>
+  /* Resolves the theme and stamps <html> before first paint, so a dark launch
+     never flashes cream. Runs inline for that reason — a <script src> would be
+     a network round trip ahead of the paint on a cold load.
+
+     `pref` is the user's choice of the three; `resolved` is the light/dark it
+     currently means. The OS query lives here rather than in the stylesheet so
+     that CSS only ever sees a settled [data-theme], and so 'system' can follow
+     the OS live. */
+  (function () {
+    var KEY = 'metro.theme';
+    var GROUND = { light: '#f5ead8', dark: '#1a1714' };
+    var ORDER = ['system', 'light', 'dark'];
+    var mq = matchMedia('(prefers-color-scheme: dark)');
+    var pref;
+    try { pref = localStorage.getItem(KEY); } catch (e) {}
+    if (ORDER.indexOf(pref) < 1) pref = 'system';
+
+    function apply() {
+      var resolved = pref === 'system' ? (mq.matches ? 'dark' : 'light') : pref;
+      document.documentElement.setAttribute('data-theme', resolved);
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.content = GROUND[resolved];
+      api.pref = pref;
+      api.resolved = resolved;
+      dispatchEvent(new Event('themechange'));
+    }
+
+    var api = window.__theme = {
+      pref: pref,
+      resolved: 'light',
+      order: ORDER,
+      set: function (p) {
+        pref = ORDER.indexOf(p) < 0 ? 'system' : p;
+        try {
+          if (pref === 'system') localStorage.removeItem(KEY);
+          else localStorage.setItem(KEY, pref);
+        } catch (e) {}
+        apply();
+      },
+      cycle: function () { api.set(ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]); }
+    };
+
+    /* An explicit Light or Dark outranks the OS; only 'system' tracks it. */
+    mq.addEventListener('change', function () { if (pref === 'system') apply(); });
+    apply();
+  })();
+</script>
+
 <link rel="stylesheet" href="ds/styles.css">
 
 <style>
@@ -158,6 +207,7 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
 
       <div style="display:flex; gap:var(--space-2); align-items:center;">
         <button onClick="{{ onCopy }}" aria-label="Share this pattern" title="{{ copyLabel }}" style="{{ shareStyle }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="14"></line></svg></button>
+        <button onClick="{{ onTheme }}" aria-label="{{ themeAria }}" title="{{ themeAria }}" style="{{ themeStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path sc-camel-d="{{ themeIcon }}"></path></svg>{{ themeLabel }}</button>
       </div>
 
       <sc-if value="{{ showInstall }}" hint-placeholder-val="{{ false }}">
@@ -187,6 +237,13 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
 <script type="text/x-dc" data-dc-script data-props="{&quot;instanceId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;a&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;syncUrl&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;keyboard&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 const NOOP = () => {};
 const CHECK_LABEL = { idle:'Check for updates', checking:'Checking\u2026', current:'Up to date', update:'Update ready' };
+/* Single-path Lucide sun-moon / sun / moon, so the icon is one bound attribute
+   rather than three conditional blocks. */
+const THEME = {
+  system: { label:'System', icon:'M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4' },
+  light:  { label:'Light',  icon:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4' },
+  dark:   { label:'Dark',   icon:'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z' }
+};
 const LEVEL_NAME = { accent:'major accent', minor:'minor accent', normal:'beat', muted:'silent' };
 const FB = {
   bpm:100, bpmText:'100', marking:'Andante', running:false, pending:false, hintVisible:true,
@@ -210,8 +267,9 @@ class Component extends DCLogic {
   componentDidMount(){
     this._rs = this.measure;
     addEventListener('resize', this._rs);
-    this._swi = () => this.forceUpdate();
-    addEventListener('swinfo', this._swi);
+    this._rerender = () => this.forceUpdate();
+    addEventListener('swinfo', this._rerender);
+    addEventListener('themechange', this._rerender);
     if (window.ResizeObserver) { this._ro = new ResizeObserver(this.measure); }
     this.measure();
     const boot = () => {
@@ -225,7 +283,7 @@ class Component extends DCLogic {
     };
     boot();
   }
-  componentWillUnmount(){ removeEventListener('resize', this._rs); removeEventListener('swinfo', this._swi); if (this._ro) this._ro.disconnect(); clearTimeout(this._t); if (this.ctl) this.ctl.unmount(); }
+  componentWillUnmount(){ removeEventListener('resize', this._rs); removeEventListener('swinfo', this._rerender); removeEventListener('themechange', this._rerender); if (this._ro) this._ro.disconnect(); clearTimeout(this._t); if (this.ctl) this.ctl.unmount(); }
 
   renderVals(){
     const v = this.ctl ? this.ctl.vals() : FB;
@@ -246,6 +304,7 @@ class Component extends DCLogic {
     const gridStyle = 'height:' + GRID_H + 'px; width:100%; flex:none; display:flex; align-items:center; justify-content:center;';
     const gridInner = 'display:grid; width:100%; max-width:' + (cols * cell + (cols - 1) * GAP) + 'px; grid-template-columns:repeat(' + cols + ', minmax(0,1fr)); gap:' + GAP + 'px;';
     const ring = cell < 50 ? 2 : 3;
+    const theme = THEME[window.__theme && window.__theme.pref] || THEME.system;
     return {
       ...v,
       onBpmInputEv: (e) => (v.onBpmText || NOOP)(e.target.value.replace(/[^0-9]/g, '')),
@@ -329,6 +388,11 @@ class Component extends DCLogic {
       shareStyle: 'width:44px; height:44px; border-radius:999px; font-size:18px; display:flex; align-items:center; justify-content:center; flex:none; background:' + (v.copied ? 'var(--color-accent-2-200)' : 'transparent') + '; color:var(--color-neutral-700);',
       onCopy: v.onCopy || NOOP,
       onDismissInstall: v.onDismissInstall || NOOP,
+      themeIcon: theme.icon,
+      themeLabel: theme.label,
+      themeAria: 'Appearance: ' + theme.label + '. Tap to change.',
+      themeStyle: 'margin-left:auto; height:44px; padding:0 var(--space-3); border-radius:999px; display:flex; align-items:center; gap:var(--space-2); flex:none; font-size:13px; font-weight:600; color:var(--color-neutral-700);',
+      onTheme: () => (window.__theme || { cycle: NOOP }).cycle(),
       swVersion: (window.__swInfo && window.__swInfo.version) || '—',
       checkLabel: CHECK_LABEL[(window.__swInfo && window.__swInfo.state) || 'idle'],
       checkStyle: 'height:32px; padding:0 var(--space-3); border-radius:999px; font-size:12px; font-weight:600; color:var(--color-neutral-700); background:var(--color-surface);',

@@ -17,6 +17,8 @@ Left-aligned, asymmetric layouts. Flush-left headings; content hugs the left edg
 
 A light ground (`--color-bg` #f5ead8) with `--color-text` #201e1d and two accents — `--color-accent` #c67139 and `--color-accent-2` #7a8a5e. Each role carries a 100–900 tonal ramp (`--color-neutral-100` … `--color-accent-2-900`) generated in OKLCH on a shared perceptual lightness scale, so the same step of any ramp has the same visual weight. Use the light steps (100–300) for tinted fills, hovers and subtle borders, 500 as the role's base, and the dark steps (700–900) for text on tinted fills and for pressed states; prefer ramp steps over ad-hoc `color-mix()`. For elevation use `--shadow-sm/md/lg` (already tuned to the ground) rather than ad-hoc box-shadows.
 
+A dark ground ships alongside it under `:root[data-theme="dark"]`: `--color-bg` #1a1714, `--color-surface` #2a2521, `--color-text` #f2e9db, with the accents lightened to #f6a06b and #aebf92 so they still clear 3:1 against it. Every ramp runs end-for-end against its light counterpart — step 100 is always the step nearest the ground and 900 the far extreme — so a token used correctly on the light ground inverts on the dark one with no per-component rule. `--shadow-*` become a hairline edge over ambient darkness, since an ink shadow does not read on a dark ground. The sheet carries no `prefers-color-scheme` query: a consuming page is expected to resolve the preference itself and set `data-theme` to `light` or `dark`.
+
 ## Type
 
 Caprasimo for headings over Figtree for body text, loaded as `--font-heading` / `--font-body`. Density 1.10× and radius 16px are already baked into the `--space-*` / `--radius-*` scales — use the variables, not raw numbers.
