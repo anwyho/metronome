@@ -5,14 +5,17 @@ export const STRAIGHT = 50;
 
 /* Swing splits a tick pair long-short, so it only means anything when the
    clicks per beat divide into pairs — even subdivisions. */
-export const swingApplies = (sub) => sub >= 2 && sub % 2 === 0;
+export const swingApplies = (sub: number): boolean => sub >= 2 && sub % 2 === 0;
 /* The off-tick can land anywhere in the pair bar the very ends, where it would
    collide with the tick on either side. Under 50 it lands early — reverse
    swing; the worklet's tick times and its shortest-click cap already handle it. */
 export const MIN_SWING = 5;
 export const MAX_SWING = 95;
 
-const NAMED = [
+/* A stop's label and the swing percentage it names. */
+export type SwingPreset = [name: string, value: number];
+
+const NAMED: SwingPreset[] = [
   ["Straight", 50],
   ["Light", 55],
   ["Medium", 60],
@@ -21,19 +24,22 @@ const NAMED = [
 ];
 
 /* Every named stop has a mirror below 50. */
-export const PRESETS = [
+export const PRESETS: SwingPreset[] = [
   ...NAMED.filter(([, value]) => value !== STRAIGHT)
-    .map(([name, value]) => [`Reverse ${name.toLowerCase()}`, 100 - value])
+    .map(([name, value]): SwingPreset => [
+      `Reverse ${name.toLowerCase()}`,
+      100 - value,
+    ])
     .reverse(),
   ...NAMED,
 ];
 
-export const clampSwing = (swing) =>
+export const clampSwing = (swing: number): number =>
   Math.min(MAX_SWING, Math.max(MIN_SWING, Math.round(swing)));
 
 /* Empty when the subdivision cannot carry swing at all — the control is
    disabled then, and naming a value it is not applying would be a lie. */
-export function swingName(swing, sub) {
+export function swingName(swing: number, sub: number): string {
   if (!swingApplies(sub)) return "";
   const preset = PRESETS.find(([, value]) => value === swing);
   return preset ? preset[0] : swing + "%";
@@ -41,10 +47,10 @@ export function swingName(swing, sub) {
 
 /* Where a value sits on the slider, 0 to 1. The guide dots and the thumb read
    the same span, so they cannot drift apart. */
-export const swingFraction = (swing) =>
+export const swingFraction = (swing: number): number =>
   (swing - MIN_SWING) / (MAX_SWING - MIN_SWING);
 
 /* Where in the tick pair the off-click actually lands, 0 to 1 — which is what
    the pair illustration draws, and is not the same number as the slider's
    position. */
-export const pairPosition = (swing) => swing / 100;
+export const pairPosition = (swing: number): number => swing / 100;

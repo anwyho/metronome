@@ -2,7 +2,8 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 import { tapTempo, tempoMarking } from "../metronome/tempo.js";
 
-const at = (...gaps) => gaps.reduce((ts, g) => [...ts, ts.at(-1) + g], [0]);
+const at = (...gaps: number[]): number[] =>
+  gaps.reduce<number[]>((ts, g) => [...ts, ts.at(-1)! + g], [0]);
 
 describe("tap tempo", () => {
   it("needs two taps before it says anything", () => {

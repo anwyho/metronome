@@ -3,6 +3,9 @@
    change and tells its subscribers, so the UI can compare by identity. */
 
 import { installContext } from "../pwa/install.js";
+import type { AnchoredGrid } from "./timing.js";
+import type { Pattern } from "./pattern.js";
+import type { ShareState } from "./share.js";
 import { createEngine, supported } from "./engine.js";
 import { createPrefs } from "./prefs.js";
 import { cycleBeat, resize } from "./pattern.js";
@@ -11,19 +14,72 @@ import { clampBpm, tapTempo } from "./tempo.js";
 import { STRAIGHT, swingApplies } from "./swing.js";
 import { reanchor, tickAtTime, visualLead } from "./timing.js";
 
+/* Everything the UI renders from. The link-carried fields come from
+   `ShareState`, so the two cannot drift. */
+export interface State extends ShareState {
+  bpmText: string;
+  volume: number;
+  countIn: number;
+  running: boolean;
+  tick: number;
+  taps: number[];
+  copied: boolean;
+  elapsed: string;
+  bars: number;
+  unsupported: boolean;
+  standalone: boolean;
+  touch: boolean;
+  installDismissed: boolean;
+}
+
+/* Every way the UI is allowed to change the state. */
+export interface Actions {
+  toggle(): void;
+  /* `retext` false leaves the text field alone, so typing into it is not
+     rewritten under the cursor. */
+  setBpm(value: number, retext?: boolean): void;
+  nudgeBpm(delta: number): void;
+  setBpmText(raw: string): void;
+  commitBpm(): void;
+  setSub(sub: number): void;
+  setSwing(swing: number): void;
+  setVolume(volume: number): void;
+  setBeats(beats: Pattern): void;
+  cycleBeat(index: number): void;
+  resizeBeats(delta: number): void;
+  tap(): void;
+  cycleCountIn(): void;
+  dismissInstall(): void;
+  share(): Promise<void>;
+}
+
+export interface Store {
+  readonly state: State;
+  actions: Actions;
+  mount(): void;
+  unmount(): void;
+  subscribe(listener: (state: State) => void): () => void;
+}
+
+export interface StoreOptions {
+  id?: string;
+  syncUrl?: boolean;
+  keyboard?: boolean;
+}
+
 /* How far ahead of the press the first click is scheduled. Long enough to
    survive a busy frame, short enough not to read as lag. */
 const LEAD_IN = 0.08;
 const MAX_COUNT_IN = 5;
 
-const clock = (seconds) =>
+const clock = (seconds: number): string =>
   Math.floor(seconds / 60) +
   ":" +
   String(Math.floor(seconds % 60)).padStart(2, "0");
 
-const span = (state) => state.beats.length * state.sub;
+const span = (state: State): number => state.beats.length * state.sub;
 
-export function currentBeat(state) {
+export function currentBeat(state: State): number {
   if (!state.running || state.tick < 0) return -1;
   const n = span(state);
   return Math.floor((((state.tick % n) + n) % n) / state.sub);
@@ -33,12 +89,12 @@ export function createStore({
   id = "a",
   syncUrl = true,
   keyboard = true,
-} = {}) {
+}: StoreOptions = {}): Store {
   const engine = createEngine();
   const prefs = createPrefs(id);
-  const listeners = new Set();
+  const listeners = new Set<(state: State) => void>();
 
-  let state = {
+  let state: State = {
     ...DEFAULTS,
     bpmText: String(DEFAULTS.bpm),
     volume: 80,
@@ -58,12 +114,12 @@ export function createStore({
   /* What the worklet was last told. Kept apart from `state` because it is the
      grid the audio thread is actually on, which a control change has not
      reached yet. */
-  let live = null;
+  let live: AnchoredGrid | null = null;
   let startedAt = 0;
   let frame = 0;
-  let hashTimer = 0;
+  let hashTimer: ReturnType<typeof setTimeout> | 0 = 0;
 
-  const set = (patch) => {
+  const set = (patch: Partial<State>) => {
     state = { ...state, ...patch };
     for (const listener of listeners) listener(state);
   };
@@ -83,7 +139,7 @@ export function createStore({
     }, 300);
   }
 
-  function adopt(parsed) {
+  function adopt(parsed: ShareState) {
     set({ ...parsed, bpmText: String(parsed.bpm) });
   }
 
@@ -180,7 +236,7 @@ export function createStore({
 
   /* ---- actions ---- */
 
-  const actions = {
+  const actions: Actions = {
     toggle: () => (state.running ? stop() : start()),
 
     setBpm(value, retext = true) {
@@ -262,8 +318,12 @@ export function createStore({
 
   /* Registering a listener hands back how to undo it, so an added listener and
      a removed one cannot drift apart. */
-  const teardown = [];
-  function on(type, handler, options) {
+  const teardown: (() => void)[] = [];
+  function on<K extends keyof WindowEventMap>(
+    type: K,
+    handler: (event: WindowEventMap[K]) => void,
+    options?: boolean | AddEventListenerOptions,
+  ) {
     addEventListener(type, handler, options);
     teardown.push(() => removeEventListener(type, handler, options));
   }
@@ -287,8 +347,8 @@ export function createStore({
     writeHash();
   }
 
-  function onKey(e) {
-    if (!keyboard || e.target?.tagName === "INPUT") return;
+  function onKey(e: KeyboardEvent) {
+    if (!keyboard || (e.target as Element | null)?.tagName === "INPUT") return;
     /* The physical key, so a layout that puts something else there still starts
        and stops the transport. */
     if (e.code === "Space") {
@@ -301,7 +361,7 @@ export function createStore({
       return;
     }
     const step = e.shiftKey ? 10 : 1;
-    const arrows = {
+    const arrows: Record<string, () => void> = {
       ArrowUp: () => actions.nudgeBpm(step),
       ArrowDown: () => actions.nudgeBpm(-step),
       ArrowRight: () => actions.resizeBeats(1),
@@ -309,7 +369,7 @@ export function createStore({
     };
     if (!Object.hasOwn(arrows, e.key)) return;
     e.preventDefault();
-    arrows[e.key]();
+    arrows[e.key]!();
   }
 
   function mount() {

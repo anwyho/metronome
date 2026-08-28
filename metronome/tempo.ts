@@ -3,7 +3,7 @@
 const MIN_BPM = 20;
 const MAX_BPM = 999;
 
-const MARKS = [
+const MARKS: [limit: number, name: string][] = [
   [60, "Largo"],
   [76, "Adagio"],
   [108, "Andante"],
@@ -12,10 +12,10 @@ const MARKS = [
   [Infinity, "Presto"],
 ];
 
-export const clampBpm = (bpm) =>
+export const clampBpm = (bpm: number): number =>
   Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(bpm)));
 
-export function tempoMarking(bpm) {
+export function tempoMarking(bpm: number): string {
   for (const [hi, name] of MARKS) if (bpm < hi) return name;
   return "Presto";
 }
@@ -23,11 +23,11 @@ export function tempoMarking(bpm) {
 /* Rolling mean of the last four intervals. A gap far longer than the running
    mean is someone starting again rather than a slower tempo, so it clears the
    buffer; a single interval well off the mean is a slip, so it is dropped. */
-export function tapTempo(times) {
+export function tapTempo(times: number[]): number | null {
   if (times.length < 2) return null;
-  let buf = [];
+  let buf: number[] = [];
   for (let i = 1; i < times.length; i++) {
-    const d = times[i] - times[i - 1];
+    const d = times[i]! - times[i - 1]!;
     const mean = buf.length
       ? buf.reduce((a, b) => a + b, 0) / buf.length
       : null;

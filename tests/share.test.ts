@@ -1,8 +1,9 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
+import type { ShareState } from "../metronome/share.js";
 import { parseHash, serializeHash } from "../metronome/share.js";
 
-const DEFAULTS = {
+const DEFAULTS: ShareState = {
   bpm: 130,
   beats: ["accent", "normal", "normal", "minor", "normal"],
   sub: 1,
@@ -16,7 +17,7 @@ describe("share", () => {
   });
 
   it("round-trips a state through the hash", () => {
-    for (const state of [
+    const cases: ShareState[] = [
       DEFAULTS,
       {
         bpm: 200,
@@ -27,7 +28,8 @@ describe("share", () => {
       { bpm: 20, beats: ["accent", "normal"], sub: 8, swing: 50 },
       /* Under 50 the off-tick lands early. */
       { bpm: 88, beats: ["accent", "normal", "normal"], sub: 2, swing: 33 },
-    ]) {
+    ];
+    for (const state of cases) {
       assert.deepEqual(parseHash("#" + serializeHash(state)), state);
     }
   });

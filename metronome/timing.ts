@@ -4,12 +4,40 @@
 
 import { STRAIGHT, swingApplies } from "./swing.js";
 
+/* One (tick, time) pair. Never a bare tick: the time it sounded is half of
+   what fixes the grid. */
+export interface Anchor {
+  tick: number;
+  time: number;
+}
+
+/* Everything the tick grid is made of, apart from where it is pinned. */
+export interface Grid {
+  bpm: number;
+  sub: number;
+  swing: number;
+}
+
+export interface AnchoredGrid extends Grid {
+  anchor: Anchor;
+}
+
+export interface ReanchorFrom extends AnchoredGrid {
+  now: number;
+}
+
 /* Seconds per tick. */
-export const spt = (bpm, sub) => 60 / bpm / sub;
+export const spt = (bpm: number, sub: number): number => 60 / bpm / sub;
 
 /* Ticks run in pairs and swing moves the second of each pair, so a tick's time
    is its pair's start plus, for an odd tick, the swung fraction of the pair. */
-export function timeAtTick(k, anchor, bpm, sub, swing) {
+export function timeAtTick(
+  k: number,
+  anchor: Anchor,
+  bpm: number,
+  sub: number,
+  swing: number,
+): number {
   const s = spt(bpm, sub);
   const p = Math.floor(k / 2);
   const q = k - 2 * p;
@@ -18,7 +46,13 @@ export function timeAtTick(k, anchor, bpm, sub, swing) {
 }
 
 /* The last tick that has sounded at time `t`. */
-export function tickAtTime(t, anchor, bpm, sub, swing) {
+export function tickAtTime(
+  t: number,
+  anchor: Anchor,
+  bpm: number,
+  sub: number,
+  swing: number,
+): number {
   const rel = tickPosition(t, anchor, bpm, sub);
   const p = Math.floor(rel / 2);
   const frac = (rel - 2 * p) / 2;
@@ -26,7 +60,12 @@ export function tickAtTime(t, anchor, bpm, sub, swing) {
 }
 
 /* Where the transport is, as a fraction of a tick. */
-function tickPosition(t, anchor, bpm, sub) {
+function tickPosition(
+  t: number,
+  anchor: Anchor,
+  bpm: number,
+  sub: number,
+): number {
   return anchor.tick + (t - anchor.time) / spt(bpm, sub);
 }
 
@@ -42,7 +81,7 @@ const LEAD = 0.02;
    is what the worklet was told, which is straight whenever the subdivision in
    force could not carry swing, and reading a missing field out of it would
    quietly throw away a setting the player still has set. */
-export function reanchor(from, to) {
+export function reanchor(from: ReanchorFrom, to: Grid): AnchoredGrid {
   const { anchor, bpm: oldBpm, sub: oldSub, swing: oldSwing } = from;
   const { bpm, sub } = to;
   const swing = swingApplies(sub) ? to.swing : STRAIGHT;
@@ -89,4 +128,5 @@ export const MAX_SUB = 8;
    the dot lighting behind the click. Read the schedule slightly ahead to cover
    the trip, capped at a quarter tick so a fast subdivision cannot be nudged
    onto the next one. */
-export const visualLead = (bpm, sub) => Math.min(0.05, 15 / (bpm * sub));
+export const visualLead = (bpm: number, sub: number): number =>
+  Math.min(0.05, 15 / (bpm * sub));

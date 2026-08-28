@@ -1,22 +1,31 @@
 /* The pattern as a URL hash, so a link carries a setup. Never throws: the
    input is whatever was in someone's address bar. */
 
+import type { Level, Pattern } from "./pattern.js";
 import { GLYPH, MAX_BEATS, MIN_BEATS, parseGrouping } from "./pattern.js";
 import { clampBpm } from "./tempo.js";
 import { STRAIGHT, clampSwing } from "./swing.js";
 import { MAX_SUB, MIN_SUB } from "./timing.js";
 
+/* The part of the state a link carries. */
+export interface ShareState {
+  bpm: number;
+  beats: Pattern;
+  sub: number;
+  swing: number;
+}
+
 /* What a first visit opens on — a five-beat bar with a minor accent on the
    fourth, so the grid arrives showing what the levels are for rather than four
    identical dots. */
-export const DEFAULTS = {
+export const DEFAULTS: ShareState = {
   bpm: 130,
   beats: ["accent", "normal", "normal", "minor", "normal"],
   sub: 1,
   swing: STRAIGHT,
 };
 
-const FROM_GLYPH = {
+const FROM_GLYPH: Record<string, Level> = {
   X: "accent",
   x: "minor",
   ".": "muted",
@@ -24,12 +33,12 @@ const FROM_GLYPH = {
   O: "normal",
 };
 
-export function parseHash(hash) {
-  const out = { ...DEFAULTS, beats: [...DEFAULTS.beats] };
+export function parseHash(hash: unknown): ShareState {
+  const out: ShareState = { ...DEFAULTS, beats: [...DEFAULTS.beats] };
   const raw = String(hash ?? "").replace(/^#/, "");
   if (!raw) return out;
 
-  const kv = {};
+  const kv: Record<string, string> = {};
   for (const part of raw.split("&")) {
     const i = part.indexOf("=");
     if (i < 1) continue;
@@ -48,7 +57,7 @@ export function parseHash(hash) {
     if (grouping) out.beats = grouping;
   }
   if (kv.beats !== undefined && /^[XxOo.]+$/.test(kv.beats)) {
-    const beats = [...kv.beats].map((c) => FROM_GLYPH[c]).slice(0, MAX_BEATS);
+    const beats = [...kv.beats].map((c) => FROM_GLYPH[c]!).slice(0, MAX_BEATS);
     while (beats.length < MIN_BEATS) beats.push("normal");
     out.beats = beats;
   }
@@ -65,7 +74,7 @@ export function parseHash(hash) {
   return out;
 }
 
-export function serializeHash(state) {
+export function serializeHash(state: ShareState): string {
   const beats = state.beats.map((b) => GLYPH[b]).join("");
   let hash = `bpm=${Math.round(state.bpm)}&beats=${beats}&sub=${state.sub}`;
   /* A straight pattern is the default, so saying so only lengthens the link. */

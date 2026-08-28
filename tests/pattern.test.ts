@@ -1,5 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
+import type { Level, Pattern } from "../metronome/pattern.js";
 import {
   cycleLevel,
   parseGrouping,
@@ -7,13 +8,15 @@ import {
   rowsFromBeats,
 } from "../metronome/pattern.js";
 
-const sizes = (beats) => rowsFromBeats(beats).map((r) => r.length);
-const flat = (beats) =>
+const sizes = (beats: Pattern) => rowsFromBeats(beats).map((r) => r.length);
+const flat = (beats: Pattern) =>
   rowsFromBeats(beats)
     .flat()
     .map((c) => c.index);
-const beats = (n, level = "normal") => Array.from({ length: n }, () => level);
-const grouped = (...ns) => ns.flatMap((n) => ["accent", ...beats(n - 1)]);
+const beats = (n: number, level: Level = "normal"): Pattern =>
+  Array.from({ length: n }, () => level);
+const grouped = (...ns: number[]): Pattern =>
+  ns.flatMap((n): Pattern => ["accent", ...beats(n - 1)]);
 
 describe("grouping", () => {
   it("turns a sum into accents", () => {
@@ -60,7 +63,7 @@ describe("rows", () => {
 
   it("never loses or reorders a beat", () => {
     for (let n = 2; n <= 24; n++) {
-      const pattern = ["accent", ...beats(n - 1)];
+      const pattern: Pattern = ["accent", ...beats(n - 1)];
       assert.deepEqual(
         flat(pattern),
         pattern.map((_, i) => i),
@@ -71,7 +74,7 @@ describe("rows", () => {
 });
 
 describe("resizing", () => {
-  const bar = (n) => ["accent", ...beats(n - 1)];
+  const bar = (n: number): Pattern => ["accent", ...beats(n - 1)];
 
   it("moves by as many beats as it is asked for", () => {
     assert.equal(resize(bar(4), 1).length, 5);
@@ -80,7 +83,7 @@ describe("resizing", () => {
   });
 
   it("keeps the beats it is not removing", () => {
-    const before = ["accent", "minor", "muted", "normal", "accent"];
+    const before: Pattern = ["accent", "minor", "muted", "normal", "accent"];
     assert.deepEqual(resize(before, -2), before.slice(0, 3));
     assert.deepEqual(resize(before, 2), [...before, "normal", "normal"]);
   });
