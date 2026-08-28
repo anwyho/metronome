@@ -170,7 +170,7 @@ registerProcessor('click-processor', ClickProcessor);
     return clamp(
       Math.round(60000 / (buf.reduce((a, b) => a + b, 0) / buf.length)),
       20,
-      600,
+      999,
     );
   }
 
@@ -195,7 +195,7 @@ registerProcessor('click-processor', ClickProcessor);
     }
     if (kv.bpm !== undefined) {
       const n = parseFloat(kv.bpm);
-      if (Number.isFinite(n)) out.bpm = clamp(Math.round(n), 20, 600);
+      if (Number.isFinite(n)) out.bpm = clamp(Math.round(n), 20, 999);
     }
     if (kv.groups !== undefined) {
       const g = parseGrouping(kv.groups);
@@ -578,12 +578,23 @@ registerProcessor('click-processor', ClickProcessor);
         oldSw,
       );
       let atick = 2 * Math.ceil(nowTick / 2);
-      const atime = this.timeAtTick(atick, a, oldB, oldS, oldSw);
+      let atime = this.timeAtTick(atick, a, oldB, oldS, oldSw);
       const bpm = next.bpm !== undefined ? next.bpm : this.s.bpm;
       const sub = next.sub !== undefined ? next.sub : this.s.sub;
       const swingRaw = next.swing !== undefined ? next.swing : this.s.swing;
       const swing = swingApplies(sub) ? swingRaw : 50;
-      if (sub !== oldS) atick = 2 * Math.round(((atick / oldS) * sub) / 2);
+      if (sub !== oldS) {
+        /* A tick in one subdivision rarely names a tick in another, and
+           rounding the converted anchor to the nearest pair moved the beat
+           itself — a quarter of a beat here, an eighth there, compounding each
+           time the slider passed a value until the downbeat no longer fell on
+           the pulse. A beat boundary is the one position both grids agree on,
+           so a change of subdivision waits for the next one. Tempo and swing
+           still take the next pair; neither converts, so neither can drift. */
+        const beat = Math.ceil(nowTick / oldS);
+        atick = beat * sub;
+        atime = this.timeAtTick(beat * oldS, a, oldB, oldS, oldSw);
+      }
       const anchor = { tick: atick, time: atime };
       this.a = anchor;
       this.abpm = bpm;
@@ -664,7 +675,7 @@ registerProcessor('click-processor', ClickProcessor);
     }
 
     setBpm(v, retext) {
-      const bpm = clamp(Math.round(v), 20, 600);
+      const bpm = clamp(Math.round(v), 20, 999);
       this.s.bpm = bpm;
       if (retext) this.s.bpmText = String(bpm);
       this.writeHash();
