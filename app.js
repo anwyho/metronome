@@ -4,7 +4,8 @@
 (function () {
   /* The template reads this and re-renders on the 'swinfo' event. Created here
      or by the template script, whichever runs first. */
-  var info = window.__swInfo || (window.__swInfo = { version: null });
+  var info =
+    window.__swInfo || (window.__swInfo = { version: null, update: false });
 
   function set(patch) {
     for (var k in patch) info[k] = patch[k];
@@ -55,19 +56,17 @@
     sw.controller.postMessage({ type: "version" }, [ch.port2]);
   }
 
-  /* Checking is silent — on launch, on every visibilitychange and hourly. The
-     only thing an update surfaces is this button, and only once there really
-     is one to take. */
+  /* Checking is silent. Finding something only raises a flag the panel reads,
+     so the offer sits beside the version it would replace. */
   function showBanner() {
-    var el = document.getElementById("update-banner");
-    if (!el || el.hasAttribute("data-show")) return;
-    el.setAttribute("data-show", "");
-    el.addEventListener("click", function () {
-      if (reloading) return;
-      reloading = true;
-      location.reload();
-    });
+    if (!info.update) set({ update: true });
   }
+
+  window.__applyUpdate = function () {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  };
 
   sw.register("sw.js", { scope: "./" })
     .then(function (reg) {
