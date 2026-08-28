@@ -6,7 +6,7 @@
 /* Long enough that a tap is unambiguously a tap. */
 export const HOLD_DELAY = 0.35;
 /* How long the hold takes to reach full speed. */
-export const RAMP_SECONDS = 4;
+const RAMP_SECONDS = 4;
 /* Steps per second when repeating begins. Starting slow is the point: the first
    second has to be usable for a nudge of two or three, whatever is being
    nudged. */

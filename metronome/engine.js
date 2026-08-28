@@ -78,6 +78,18 @@ export function createEngine() {
     } catch {}
   }
 
+  function releaseWakeLock() {
+    if (!wakeLock) return;
+    try {
+      wakeLock.release();
+    } catch {}
+    wakeLock = null;
+  }
+
+  function post(message) {
+    if (node) node.port.postMessage(message);
+  }
+
   return {
     supported,
     get currentTime() {
@@ -92,20 +104,12 @@ export function createEngine() {
     },
     open,
     resume,
-    post(message) {
-      if (node) node.port.postMessage(message);
-    },
+    post,
     acquireWakeLock,
-    releaseWakeLock() {
-      if (!wakeLock) return;
-      try {
-        wakeLock.release();
-      } catch {}
-      wakeLock = null;
-    },
+    releaseWakeLock,
     close() {
-      this.releaseWakeLock();
-      this.post({ type: "stop" });
+      releaseWakeLock();
+      post({ type: "stop" });
       try {
         if (ctx) ctx.close();
       } catch {}

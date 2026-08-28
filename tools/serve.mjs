@@ -49,12 +49,10 @@ export function startServer(options = {}) {
     files: new Map(Object.entries(options.files || {})),
     redirectShell: !!options.redirectShell,
     offline: false,
-    log: [],
   };
 
   const server = createServer((req, res) => {
     const url = new URL(req.url, "http://127.0.0.1");
-    state.log.push(url.pathname + url.search);
 
     if (state.offline) {
       req.destroy();

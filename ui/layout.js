@@ -1,8 +1,8 @@
 /* Grid sizing. Pure: viewport in, geometry out, so the reserve constants below
    can be reasoned about — and measured against — without a browser. */
 
-export const WIDE = 820;
-export const GAP = 8;
+const WIDE = 820;
+const GAP = 8;
 
 /* What is left for the beat grid once the tempo, the transport and the panel
    chevron have taken their share. Measured from the laid-out screen and left a
@@ -45,6 +45,7 @@ export function gridMetrics(vw, vh, beatCount) {
     cols,
     cell,
     height,
+    gap: GAP,
     width: cols * cell + (cols - 1) * GAP,
     ring: cell < 50 ? 2 : 3,
   };

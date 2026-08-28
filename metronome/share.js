@@ -2,8 +2,9 @@
    input is whatever was in someone's address bar. */
 
 import { GLYPH, MAX_BEATS, MIN_BEATS, parseGrouping } from "./pattern.js";
-import { MAX_BPM, MIN_BPM, clampBpm } from "./tempo.js";
+import { clampBpm } from "./tempo.js";
 import { STRAIGHT, clampSwing } from "./swing.js";
+import { MAX_SUB, MIN_SUB } from "./timing.js";
 
 /* What a first visit opens on — a five-beat bar with a minor accent on the
    fourth, so the grid arrives showing what the levels are for rather than four
@@ -15,7 +16,6 @@ export const DEFAULTS = {
   swing: STRAIGHT,
 };
 
-const MAX_SUB = 8;
 const FROM_GLYPH = {
   X: "accent",
   x: "minor",
@@ -55,8 +55,8 @@ export function parseHash(hash) {
   if (kv.sub !== undefined) {
     const n = parseFloat(kv.sub);
     out.sub = Number.isFinite(n)
-      ? Math.min(MAX_SUB, Math.max(1, Math.round(n)))
-      : 1;
+      ? Math.min(MAX_SUB, Math.max(MIN_SUB, Math.round(n)))
+      : MIN_SUB;
   }
   if (kv.swing !== undefined) {
     const n = parseFloat(kv.swing);
@@ -72,5 +72,3 @@ export function serializeHash(state) {
   if (state.swing !== STRAIGHT) hash += `&swing=${state.swing}`;
   return hash;
 }
-
-export { MIN_BPM, MAX_BPM, MAX_SUB };

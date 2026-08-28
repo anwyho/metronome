@@ -1,6 +1,5 @@
 import { html } from "../html.js";
-
-const MAX_SUB = 8;
+import { MAX_SUB, MIN_SUB } from "../../metronome/timing.js";
 
 export function SubdivisionControl({ sub, onChange }) {
   return html`
@@ -20,7 +19,7 @@ export function SubdivisionControl({ sub, onChange }) {
       <input
         class="slider"
         type="range"
-        min="1"
+        min=${MIN_SUB}
         max=${MAX_SUB}
         step="1"
         value=${sub}

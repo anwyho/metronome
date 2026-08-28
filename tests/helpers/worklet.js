@@ -38,6 +38,9 @@ export function createWorklet({ sampleRate = 48000 } = {}) {
 
   return {
     clicks,
+    /* The audio thread moves a render quantum at a time, and so does a click's
+       scheduled time once it is rounded to a sample. */
+    quantum: QUANTUM / sampleRate,
     get time() {
       return ctx.currentTime;
     },
@@ -55,5 +58,3 @@ export function createWorklet({ sampleRate = 48000 } = {}) {
     },
   };
 }
-
-export const QUANTUM_SECONDS = (rate = 48000) => QUANTUM / rate;

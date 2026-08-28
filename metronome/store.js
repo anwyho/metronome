@@ -21,7 +21,7 @@ const clock = (seconds) =>
   ":" +
   String(Math.floor(seconds % 60)).padStart(2, "0");
 
-export const span = (state) => state.beats.length * state.sub;
+const span = (state) => state.beats.length * state.sub;
 
 export function currentBeat(state) {
   if (!state.running || state.tick < 0) return -1;
@@ -53,7 +53,6 @@ export function createStore({
     standalone: false,
     touch: true,
     installDismissed: false,
-    hash: "",
   };
 
   /* What the worklet was last told. Kept apart from `state` because it is the
@@ -63,7 +62,6 @@ export function createStore({
   let startedAt = 0;
   let frame = 0;
   let hashTimer = 0;
-  const bound = {};
 
   const set = (patch) => {
     state = { ...state, ...patch };
@@ -74,7 +72,6 @@ export function createStore({
 
   function writeHash() {
     const hash = serializeHash(state);
-    set({ hash });
     clearTimeout(hashTimer);
     hashTimer = setTimeout(() => {
       if (syncUrl) {
@@ -87,13 +84,7 @@ export function createStore({
   }
 
   function adopt(parsed) {
-    set({
-      bpm: parsed.bpm,
-      bpmText: String(parsed.bpm),
-      beats: parsed.beats,
-      sub: parsed.sub,
-      swing: parsed.swing,
-    });
+    set({ ...parsed, bpmText: String(parsed.bpm) });
   }
 
   /* ---- transport ---- */
@@ -251,7 +242,8 @@ export function createStore({
     },
 
     async share() {
-      const url = location.origin + location.pathname + "#" + state.hash;
+      const url =
+        location.origin + location.pathname + "#" + serializeHash(state);
       try {
         if (navigator.share) await navigator.share({ url });
         else await navigator.clipboard.writeText(url);
@@ -263,8 +255,17 @@ export function createStore({
 
   /* ---- lifecycle ---- */
 
-  function mount() {
-    if (state.unsupported) return;
+  /* Registering a listener hands back how to undo it, so an added listener and
+     a removed one cannot drift apart. */
+  const teardown = [];
+  function on(type, handler, options) {
+    addEventListener(type, handler, options);
+    teardown.push(() => removeEventListener(type, handler, options));
+  }
+
+  /* The link wins over what was last used here: a shared pattern has to open as
+     the pattern that was shared. */
+  function restore() {
     set(installContext());
 
     const saved = prefs.read();
@@ -279,51 +280,59 @@ export function createStore({
     const fromUrl = syncUrl ? location.hash : "";
     adopt(parseHash(fromUrl || (syncUrl && saved.pattern) || ""));
     writeHash();
+  }
 
-    bound.hash = () => {
+  function onKey(e) {
+    if (!keyboard || e.target?.tagName === "INPUT") return;
+    /* The physical key, so a layout that puts something else there still starts
+       and stops the transport. */
+    if (e.code === "Space") {
+      e.preventDefault();
+      actions.toggle();
+      return;
+    }
+    if (e.key === "t" || e.key === "T") {
+      actions.tap();
+      return;
+    }
+    const step = e.shiftKey ? 10 : 1;
+    const arrows = {
+      ArrowUp: () => actions.nudgeBpm(step),
+      ArrowDown: () => actions.nudgeBpm(-step),
+      ArrowRight: () => actions.resizeBeats(1),
+      ArrowLeft: () => actions.resizeBeats(-1),
+    };
+    if (!Object.hasOwn(arrows, e.key)) return;
+    e.preventDefault();
+    arrows[e.key]();
+  }
+
+  function mount() {
+    if (state.unsupported) return;
+    restore();
+
+    on("hashchange", () => {
       if (!syncUrl) return;
       adopt(parseHash(location.hash));
       writeHash();
       retime({});
       postPattern();
-    };
-    bound.key = (e) => {
-      if (!keyboard || (e.target && e.target.tagName === "INPUT")) return;
-      if (e.code === "Space") {
-        e.preventDefault();
-        actions.toggle();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        actions.nudgeBpm(e.shiftKey ? 10 : 1);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        actions.nudgeBpm(e.shiftKey ? -10 : -1);
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        actions.resizeBeats(1);
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        actions.resizeBeats(-1);
-      } else if (e.key === "t" || e.key === "T") {
-        actions.tap();
-      }
-    };
+    });
+    on("keydown", onKey);
     /* A second finger on a control is a pinch-zoom gesture otherwise. */
-    bound.touch = (e) => {
-      if (e.touches && e.touches.length > 1) e.preventDefault();
-    };
-    bound.visibility = () => {
+    on(
+      "touchstart",
+      (e) => {
+        if (e.touches && e.touches.length > 1) e.preventDefault();
+      },
+      { passive: false },
+    );
+    on("visibilitychange", () => {
       if (state.running && !engine.holdsWakeLock) engine.acquireWakeLock();
-    };
+    });
     /* Opening the context on the first press of anything, rather than on the
        press of Start, means Start never waits for it. */
-    bound.unlock = () => engine.open().catch(() => {});
-
-    addEventListener("hashchange", bound.hash);
-    addEventListener("keydown", bound.key);
-    addEventListener("touchstart", bound.touch, { passive: false });
-    addEventListener("visibilitychange", bound.visibility);
-    addEventListener("pointerdown", bound.unlock, { once: true });
+    on("pointerdown", () => engine.open().catch(() => {}), { once: true });
 
     const tick = () => {
       readTransport();
@@ -335,11 +344,7 @@ export function createStore({
   function unmount() {
     cancelAnimationFrame(frame);
     clearTimeout(hashTimer);
-    removeEventListener("hashchange", bound.hash);
-    removeEventListener("keydown", bound.key);
-    removeEventListener("touchstart", bound.touch);
-    removeEventListener("visibilitychange", bound.visibility);
-    removeEventListener("pointerdown", bound.unlock);
+    for (const undo of teardown.splice(0)) undo();
     engine.close();
   }
 

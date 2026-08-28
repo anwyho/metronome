@@ -34,15 +34,3 @@ export function launch(options = {}) {
     ...options,
   });
 }
-
-/* Synthetic blur / visibilitychange are dispatched on the document but read by
-   window handlers, so they only arrive if they are allowed to bubble. */
-export const dispatch = (page, type, target = "document") =>
-  page.evaluate(
-    (t, tgt) =>
-      (tgt === "document" ? document : window).dispatchEvent(
-        new Event(t, { bubbles: true }),
-      ),
-    type,
-    target,
-  );

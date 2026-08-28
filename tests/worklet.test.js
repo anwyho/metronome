@@ -8,9 +8,6 @@ const BPM = 120;
 const BEAT = 60 / BPM;
 const BAR = PATTERN.length * BEAT;
 const START = { tick: 0, time: 0.05 };
-/* One render quantum: a click is scheduled to the sample, but the block it is
-   scheduled from is the finest the audio thread moves in. */
-const QUANTUM = 128 / 48000;
 
 function running(sub, swing = 50) {
   const w = createWorklet();
@@ -91,13 +88,13 @@ describe("worklet", () => {
     assert.ok(beats.length > 8, "the drag produced beats to check");
     for (const b of beats) {
       assert.ok(
-        within(b.time - START.time, BEAT) < QUANTUM,
+        within(b.time - START.time, BEAT) < w.quantum,
         `beat click at ${b.time} is off the ${BEAT}s grid`,
       );
     }
     for (const a of w.clicks.filter((c) => c.voice === "accent")) {
       assert.ok(
-        within(a.time - START.time, BAR) < QUANTUM,
+        within(a.time - START.time, BAR) < w.quantum,
         `accent at ${a.time} left the downbeat`,
       );
     }

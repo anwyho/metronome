@@ -1,7 +1,7 @@
 /* Tempo: what a tapped rhythm means, and what to call the result. Pure. */
 
-export const MIN_BPM = 20;
-export const MAX_BPM = 999;
+const MIN_BPM = 20;
+const MAX_BPM = 999;
 
 const MARKS = [
   [60, "Largo"],

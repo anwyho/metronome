@@ -4,15 +4,10 @@
 
 const boot = () => window.__theme;
 
-export const themeOrder = () => boot()?.order ?? ["system", "light", "dark"];
-
-/* The choice of the three — 'system', 'light' or 'dark'. */
+/* The choice of the three — 'system', 'light' or 'dark'. `window.__theme` also
+   carries `resolved`, `order` and `set` for a consumer that needs them. */
 export const themePref = () => boot()?.pref ?? "system";
 
-/* What that choice currently means: 'light' or 'dark'. */
-export const themeResolved = () => boot()?.resolved ?? "light";
-
-export const setTheme = (pref) => boot()?.set(pref);
 export const cycleTheme = () => boot()?.cycle();
 
 export function onThemeChange(listener) {

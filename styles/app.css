@@ -488,12 +488,12 @@
   background: var(--color-neutral-500);
 }
 
-[data-disabled] .swing-pair__dot {
+.field[data-disabled] .swing-pair__dot {
   opacity: 0.35;
 }
 
-[data-disabled] .swing-guides,
-[data-disabled] .swing-slider input {
+.field[data-disabled] .swing-guides,
+.field[data-disabled] .swing-slider input {
   opacity: 0.45;
 }
 

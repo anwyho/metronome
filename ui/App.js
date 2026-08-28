@@ -9,6 +9,8 @@ import { useViewport } from "./hooks/useViewport.js";
 import { gridMetrics } from "./layout.js";
 import { currentBeat } from "../metronome/store.js";
 
+/* Sections take the whole `actions` bag because they drive several of them;
+   the single-control components below them take one `onChange`. */
 export function App({ store }) {
   const state = useStore(store);
   const shell = useRef(null);
@@ -25,10 +27,8 @@ export function App({ store }) {
   const metrics = gridMetrics(vw, vh, state.beats.length);
   /* The panel is the second scroll-snap page, so the chevron scrolls to it
      rather than toggling anything. */
-  const toPanel = (e) => {
-    const scroller = e.currentTarget.closest(".shell");
-    if (scroller) scroller.scrollTo({ top: scroller.scrollHeight });
-  };
+  const toPanel = () =>
+    shell.current?.scrollTo({ top: shell.current.scrollHeight });
 
   return html`
     <div class="shell" ref=${shell}>
@@ -37,8 +37,7 @@ export function App({ store }) {
           beats=${state.beats}
           current=${currentBeat(state)}
           metrics=${metrics}
-          onTap=${store.actions.cycleBeat}
-          onResize=${store.actions.resizeBeats}
+          actions=${store.actions}
         />
         <${TempoControl}
           bpm=${state.bpm}

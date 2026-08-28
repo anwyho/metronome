@@ -24,7 +24,7 @@ export function tickAtTime(t, anchor, bpm, sub, swing) {
 }
 
 /* Where the transport is, as a fraction of a tick. */
-export function tickPosition(t, anchor, bpm, sub) {
+function tickPosition(t, anchor, bpm, sub) {
   return anchor.tick + (t - anchor.time) / spt(bpm, sub);
 }
 
@@ -73,6 +73,9 @@ export function reanchor(from, next) {
 
   return { anchor: { tick, time }, bpm, sub, swing };
 }
+
+export const MIN_SUB = 1;
+export const MAX_SUB = 8;
 
 /* Swing splits a tick pair long-short, so it only means anything when the
    clicks per beat divide into pairs — even subdivisions. */

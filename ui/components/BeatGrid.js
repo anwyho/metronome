@@ -1,13 +1,12 @@
 import { html } from "../html.js";
 import { LEVEL_NAME } from "../../metronome/pattern.js";
-import { GAP } from "../layout.js";
 import { HoldButton } from "./HoldButton.js";
 
 /* Twenty-two beats separate the ends of the range, so a hold crosses it in
    about four seconds. The tempo's ceiling here would cross it in one frame. */
 const BEATS_PER_SECOND = 12;
 
-export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
+export function BeatGrid({ beats, current, metrics, actions }) {
   return html`
     <section class="beats">
       <div class="grid" style=${{ "--grid-height": metrics.height + "px" }}>
@@ -15,7 +14,7 @@ export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
           class="grid__inner"
           style=${{
             "--grid-width": metrics.width + "px",
-            "--grid-gap": GAP + "px",
+            "--grid-gap": metrics.gap + "px",
             "--ring": metrics.ring + "px",
             gridTemplateColumns: `repeat(${metrics.cols}, minmax(0, 1fr))`,
           }}
@@ -26,7 +25,7 @@ export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
                 key=${index}
                 class="cell"
                 aria-label=${`Beat ${index + 1}, ${LEVEL_NAME[level]}`}
-                onClick=${() => onTap(index)}
+                onClick=${() => actions.cycleBeat(index)}
               >
                 <div
                   class="cell__dot"
@@ -44,7 +43,7 @@ export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
           class="round round--sm"
           aria-label="Fewer beats"
           maxRate=${BEATS_PER_SECOND}
-          onStep=${(steps) => onResize(-steps)}
+          onStep=${(steps) => actions.resizeBeats(-steps)}
         >
           −
         </${HoldButton}>
@@ -53,7 +52,7 @@ export function BeatGrid({ beats, current, metrics, onTap, onResize }) {
           class="round round--sm"
           aria-label="More beats"
           maxRate=${BEATS_PER_SECOND}
-          onStep=${(steps) => onResize(steps)}
+          onStep=${(steps) => actions.resizeBeats(steps)}
         >
           +
         </${HoldButton}>

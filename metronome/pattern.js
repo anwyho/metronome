@@ -1,10 +1,9 @@
 /* The bar: what each beat sounds like, how the count changes, and how the row
    of beats wraps for display. Pure. */
 
-export const LEVELS = ["accent", "minor", "normal", "muted"];
 /* Tapping a beat walks up from silence, so the first tap on a silent beat
    makes a sound rather than taking one away. */
-export const CYCLE = ["muted", "normal", "minor", "accent"];
+const CYCLE = ["muted", "normal", "minor", "accent"];
 export const GLYPH = { accent: "X", minor: "x", normal: "o", muted: "." };
 export const LEVEL_NAME = {
   accent: "major accent",
