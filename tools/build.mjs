@@ -23,7 +23,6 @@ const SKIP_FILES = new Set([
   "sw.js",
   "_headers",
   ".gitignore",
-  "README.md",
   "LICENSE",
   "wrangler.jsonc",
   "package.json",
@@ -43,10 +42,11 @@ function walk(dir) {
   return out;
 }
 
-/* Build sources, not shipped files: the .svg icons are what the .png the app
-   references were drawn from, and pwa/theme-boot.js is the source the inline
+/* Not shipped: prose, wherever it sits in the tree; the .svg icons the .png the
+   app references were drawn from; and pwa/theme-boot.js, the source the inline
    snippet in index.html is checked against. */
-const SOURCES = (f) => f.endsWith(".svg") || f === "pwa/theme-boot.js";
+const SOURCES = (f) =>
+  f.endsWith(".svg") || f.endsWith(".md") || f === "pwa/theme-boot.js";
 
 const files = walk(ROOT)
   .map((f) => relative(ROOT, f).split("\\").join("/"))

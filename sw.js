@@ -10,8 +10,8 @@
    how responses are served rekeys the cache too. */
 
 /* @generated-begin */
-const VERSION = "260828.0959";
-const BUILD = "f7a86ee6a8c2";
+const VERSION = "260828.1000";
+const BUILD = "12ddbe9bff10";
 const PRECACHE = [
   "./",
   "fonts/caprasimo-latin.woff2",
@@ -30,7 +30,6 @@ const PRECACHE = [
   "metronome/tempo.js",
   "metronome/timing.js",
   "metronome/worklet.js",
-  "pwa/README.md",
   "pwa/install.js",
   "pwa/register.js",
   "pwa/sw-runtime.js",
