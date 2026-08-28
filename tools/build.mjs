@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SKIP_DIRS = new Set(['.git', 'tools', 'node_modules', '_site']);
-const SKIP_FILES = new Set(['sw.js', '_headers', '.gitignore', 'README.md', 'LICENSE', 'wrangler.jsonc']);
+const SKIP_FILES = new Set(['sw.js', '_headers', '.gitignore', 'README.md', 'LICENSE', 'wrangler.jsonc', 'Metronome PWA prototype.zip']);
 
 function walk(dir) {
   const out = [];
