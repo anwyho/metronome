@@ -127,7 +127,7 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
 
   <div style="{{ mainStyle }}">
 
-  <div style="flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; gap:var(--space-4);">
+  <div style="flex:none; display:flex; flex-direction:column; gap:var(--space-4);">
    <div style="flex:0 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:var(--space-2);">
     <div style="{{ gridStyle }}">
      <div style="{{ gridInner }}">
@@ -185,7 +185,7 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
       </div>
 
       <div style="display:flex; flex-direction:column; gap:var(--space-2);">
-        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; min-height:23px;">
           <span style="font-size:11px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--color-neutral-600); line-height:1.4;">{{ swingHeading }}</span>
           <span style="{{ swingNoteStyle }}">{{ swingName }}</span>
         </div>
@@ -194,7 +194,12 @@ html, body { margin:0; padding:0; background:var(--color-bg); }
           <div style="{{ swingDotB }}"></div>
         </div>
         <input type="range" min="50" max="75" step="1" value="{{ swingValue }}" onInput="{{ onSwingEv }}" disabled="{{ swingDisabled }}" aria-label="Swing" style="{{ swingSlider }}">
-        <span style="padding-left:var(--space-3); font-size:13px; color:var(--color-neutral-600);">{{ swingNote }}</span>
+        <div style="{{ swingGuides }}" aria-hidden="true">
+          <sc-for list="{{ swingTicks }}" as="t" hint-placeholder-count="5">
+            <div style="{{ t.box }}"><div style="{{ t.mark }}"></div><span style="{{ t.label }}">{{ t.name }}</span></div>
+          </sc-for>
+        </div>
+        <span style="text-align:center; font-size:13px; color:var(--color-neutral-600);">{{ swingNote }}</span>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:var(--space-2);">
@@ -293,18 +298,20 @@ class Component extends DCLogic {
        removing beats never moves anything around it: cells shrink to fit the
        rows instead of the box growing. */
     const wide = this.state.vw >= 820;
-    /* The grid gives up height first on a short phone. Its floor is two 44px
-       rows: a taller floor pushes the transport off a phone showing Safari's
-       toolbars, which is most of them. */
-    const GRID_H = Math.round(Math.min(268, Math.max(wide ? 200 : 96, this.state.vh - (wide ? 500 : 560)))), GAP = 8;
+    const GAP = 8;
     const flatBeats = v.rows.reduce((a, r) => a.concat(r), []);
     const nB = flatBeats.length || 1;
     const cols = nB <= 6 ? nB : Math.ceil(nB / Math.ceil(nB / 6));
     const gridRows = Math.ceil(nB / cols);
     const cellMax = nB <= 4 ? 64 : 56;
-    /* 44px is the tap target and the grid scrolls inside its box rather than
-       go under it — only reachable at high beat counts on a short screen. */
-    const cell = Math.max(44, Math.floor(Math.min(cellMax, (GRID_H - (gridRows - 1) * GAP) / gridRows)));
+    /* The box takes what the rows actually need, never more, so a small pattern
+       does not leave a well of empty space above the tempo. What is spare is
+       measured from the laid-out screen and left a few pixels short, so the
+       chevron is not flush to the bottom edge. Past what fits, cells shrink
+       rather than the box clipping them. */
+    const spare = Math.min(268, Math.max(56, this.state.vh - (wide ? 500 : this.state.vh < 700 ? 500 : 526)));
+    const GRID_H = Math.round(Math.min(spare, gridRows * cellMax + (gridRows - 1) * GAP));
+    const cell = Math.floor(Math.min(cellMax, (GRID_H - (gridRows - 1) * GAP) / gridRows));
     const gridStyle = 'height:' + GRID_H + 'px; width:100%; flex:none; display:flex; align-items:center; justify-content:center;';
     const gridInner = 'display:grid; width:100%; max-width:' + (cols * cell + (cols - 1) * GAP) + 'px; grid-template-columns:repeat(' + cols + ', minmax(0,1fr)); gap:' + GAP + 'px;';
     const ring = cell < 50 ? 2 : 3;
@@ -335,7 +342,7 @@ class Component extends DCLogic {
         : 'height:100%; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; scroll-snap-type:y proximity; scroll-padding-top:max(env(safe-area-inset-top), 54px); scroll-behavior:smooth; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); padding:max(env(safe-area-inset-top), 54px) var(--space-6) max(env(safe-area-inset-bottom), 20px);',
       mainStyle: wide
         ? 'width:100%; max-width:430px; flex:none; display:flex; flex-direction:column; gap:var(--space-6);'
-        : 'scroll-snap-align:start; min-height:100%; display:flex; flex-direction:column; gap:' + (this.state.vh < 700 ? 'var(--space-4)' : 'var(--space-6)') + ';',
+        : 'scroll-snap-align:start; min-height:100%; display:flex; flex-direction:column; justify-content:center; gap:' + (this.state.vh < 700 ? 'var(--space-4)' : 'var(--space-6)') + ';',
       panelStyle: wide
         ? 'width:352px; flex:none; display:flex; flex-direction:column; gap:var(--space-6); background:var(--color-neutral-100); border-radius:var(--radius-lg); padding:var(--space-6);'
         : 'scroll-snap-align:start; margin-top:var(--space-2); padding-top:var(--space-6); display:flex; flex-direction:column; gap:var(--space-4); padding-bottom:var(--space-4);',
@@ -377,6 +384,25 @@ class Component extends DCLogic {
       /* the track is one tick pair: dot A at the pair start, dot B at swing × pair */
       swingDotB: 'position:absolute; left:calc(' + (frac * 100).toFixed(1) + '% - ' + (frac * 24 - 10).toFixed(0) + 'px); width:14px; height:14px; border-radius:999px; background:var(--color-accent); opacity:' + (v.swingDisabled ? 0.35 : 1) + '; transition:left 130ms;',
       onSwingEv: (e) => (v.onSwing || NOOP)(parseInt(e.target.value, 10) || 50),
+      swingGuides: 'position:relative; height:26px; margin-top:-2px;',
+      /* The thumb is 24px, so its centre travels between 12px and width-12px.
+         The end labels anchor to their edge instead of centring on the tick,
+         which would hang them off the panel. */
+      swingTicks: v.presets.map((p, i, all) => {
+        const frac = (p.value - 50) / 25;
+        const at = i === 0
+          ? 'left:12px; align-items:flex-start;'
+          : i === all.length - 1
+            ? 'left:calc(100% - 12px); transform:translateX(-100%); align-items:flex-end;'
+            : 'left:calc(12px + (100% - 24px) * ' + frac.toFixed(3) + '); transform:translateX(-50%); align-items:center;';
+        const on = p.active && !v.swingDisabled;
+        return {
+          name: p.label,
+          box: 'position:absolute; top:0; display:flex; flex-direction:column; align-items:center; gap:3px; ' + at + ' opacity:' + (v.swingDisabled ? 0.4 : 1) + ';',
+          mark: 'width:2px; height:6px; border-radius:1px; background:' + (on ? 'var(--color-accent)' : 'var(--color-neutral-400)') + ';',
+          label: 'font-size:10px; font-weight:600; white-space:nowrap; color:' + (on ? 'var(--color-accent-700)' : 'var(--color-neutral-600)') + ';',
+        };
+      }),
       presets: v.presets.map(p => ({ label: p.label, onPick: () => { if (!v.swingDisabled) (v.onSwing || NOOP)(p.value); }, style: pill(p.active && !v.swingDisabled) + 'opacity:' + (v.swingDisabled ? 0.45 : 1) + ';' })),
       volValue: String(v.volume),
       volLabel: v.volume === 0 ? 'silent · visual only' : v.volume + '%',
