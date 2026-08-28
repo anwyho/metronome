@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { reanchor, spt, tickAtTime, timeAtTick } from "./helpers/core.js";
+import { reanchor, spt, tickAtTime, timeAtTick } from "../metronome/timing.js";
 
 const AT_ZERO = { tick: 0, time: 0 };
 

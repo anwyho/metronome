@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { parseHash, serializeHash } from "./helpers/core.js";
+import { parseHash, serializeHash } from "../metronome/share.js";
 
 const DEFAULTS = {
   bpm: 100,

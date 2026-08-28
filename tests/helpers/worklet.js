@@ -4,7 +4,7 @@
    what caught the subdivision drift; a spectrum of the output would not have. */
 
 import { createContext, runInContext } from "node:vm";
-import { WORKLET_SRC } from "./core.js";
+import { WORKLET_SRC } from "../../metronome/worklet.js";
 
 const QUANTUM = 128;
 

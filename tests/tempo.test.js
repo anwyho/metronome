@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { tapTempo, tempoMarking } from "./helpers/core.js";
+import { tapTempo, tempoMarking } from "../metronome/tempo.js";
 
 const at = (...gaps) => gaps.reduce((ts, g) => [...ts, ts.at(-1) + g], [0]);
 

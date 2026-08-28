@@ -1,6 +1,10 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { cycleLevel, parseGrouping, rowsFromBeats } from "./helpers/core.js";
+import {
+  cycleLevel,
+  parseGrouping,
+  rowsFromBeats,
+} from "../metronome/pattern.js";
 
 const sizes = (beats) => rowsFromBeats(beats).map((r) => r.length);
 const flat = (beats) =>

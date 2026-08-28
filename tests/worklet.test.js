@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 import { createWorklet } from "./helpers/worklet.js";
-import { reanchor } from "./helpers/core.js";
+import { reanchor } from "../metronome/timing.js";
 
 const PATTERN = ["accent", "normal", "normal", "normal"];
 const BPM = 120;
