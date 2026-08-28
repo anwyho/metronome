@@ -4,14 +4,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-node tools/build.mjs --check
+npm run build
+
+node tools/build.mjs   # no longer --check; dist is regenerated, never stale
 
 [ -d _site ] && rm -rf _site
 mkdir -p _site/metronome
-# Everything the app is made of. Kept in step with tools/build.mjs's skip list:
-# what is precached is what is copied.
-cp -R index.html sw.js manifest.webmanifest \
-      pwa metronome ui styles vendor fonts icons _site/metronome/
+cp -R dist/. _site/metronome/
+rm -rf _site/metronome/tests _site/metronome/tools
 cp _headers _site/_headers
 
 # The copy list above is written by hand; the precache list is generated. A

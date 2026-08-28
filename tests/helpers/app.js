@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { launch } from "./browser.js";
-import { startServer } from "../../tools/serve.mjs";
+import { startServer } from "../../tools/serve.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SW = readFileSync(join(ROOT, "sw.js"), "utf8");

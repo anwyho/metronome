@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": [
+    "metronome/**/*",
+    "ui/**/*",
+    "pwa/**/*",
+    "tests/**/*",
+    "tools/serve.ts",
+    "types/**/*"
+  ],
+  "exclude": [
+    "pwa/sw-runtime.ts",
+    "pwa/register.ts",
+    "pwa/theme-boot.ts",
+    "sw.ts",
+    "dist"
+  ]
+}

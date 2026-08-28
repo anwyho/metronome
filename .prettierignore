@@ -3,6 +3,7 @@ node_modules/
 vendor/
 fonts/
 icons/
+dist/
 
 # Wrangler reads JSONC, but a trailing comma is not worth a deploy-day surprise.
 wrangler.jsonc
