@@ -2,14 +2,15 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 import { createWorklet } from "./helpers/worklet.js";
 import { reanchor } from "../metronome/timing.js";
+import type { Pattern } from "../metronome/pattern.js";
 
-const PATTERN = ["accent", "normal", "normal", "normal"];
+const PATTERN: Pattern = ["accent", "normal", "normal", "normal"];
 const BPM = 120;
 const BEAT = 60 / BPM;
 const BAR = PATTERN.length * BEAT;
 const START = { tick: 0, time: 0.05 };
 
-function running(sub, swing = 50) {
+function running(sub: number, swing = 50) {
   const w = createWorklet();
   w.send({
     type: "start",
@@ -22,7 +23,7 @@ function running(sub, swing = 50) {
   return w;
 }
 
-const within = (t, period) => {
+const within = (t: number, period: number) => {
   const m = ((t % period) + period) % period;
   return Math.min(m, period - m);
 };
@@ -129,7 +130,7 @@ describe("worklet", () => {
        straight grid would have put every click the same distance apart, so the
        ratio between the gaps is the whole assertion. */
     const tail = w.clicks.slice(-5);
-    const gaps = tail.slice(1).map((c, i) => c.time - tail[i].time);
+    const gaps = tail.slice(1).map((c, i) => c.time - tail[i]!.time);
     const ratio = Math.max(...gaps) / Math.min(...gaps);
     assert.ok(
       ratio > 1.8 && ratio < 2.2,
@@ -141,11 +142,11 @@ describe("worklet", () => {
     const w = running(2, 25);
     w.advance(2 * BEAT);
     const [first, off, second] = w.clicks;
-    assert.equal(off.voice, "sub");
+    assert.equal(off!.voice, "sub");
     /* The pair is one beat; a quarter swing splits it a quarter of the way in
        rather than halfway, which is the whole point of reverse swing. */
-    assert.ok(Math.abs(off.time - (first.time + 0.25 * BEAT)) < 1e-6);
-    assert.ok(Math.abs(second.time - (first.time + BEAT)) < 1e-6);
+    assert.ok(Math.abs(off!.time - (first!.time + 0.25 * BEAT)) < 1e-6);
+    assert.ok(Math.abs(second!.time - (first!.time + BEAT)) < 1e-6);
   });
 
   it("re-levels on the next tick but waits for the downbeat to resize", () => {
@@ -175,8 +176,8 @@ describe("worklet", () => {
     w2.advance(4 * BEAT);
     const last = w2.clicks.at(-1);
     assert.ok(
-      Math.abs(last.time - (START.time + 3 * BEAT)) < 1e-6,
-      `the bar ran to its end before going silent, last click at ${last.time}`,
+      Math.abs(last!.time - (START.time + 3 * BEAT)) < 1e-6,
+      `the bar ran to its end before going silent, last click at ${last!.time}`,
     );
   });
 });

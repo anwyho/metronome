@@ -6,7 +6,13 @@
    node tools/build.mjs --check  exit 1 if sw.js is stale */
 
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -42,7 +48,22 @@ const SOURCES = (f) =>
   f.endsWith(".svg") ||
   f.endsWith(".md") ||
   f.endsWith(".map") ||
-  f === "pwa/theme-boot.js";
+  f === "pwa/theme-boot.js" ||
+  f === "metronome/worklet-processor.js";
+
+/* The processor runs in the audio thread, compiled from a Blob rather than fetched,
+   so the click never waits on a request. It is authored as a real module and
+   type-checked; this inlines the compiled output as the string addModule() needs. */
+const processor = readFileSync(
+  join(ROOT, "metronome/worklet-processor.js"),
+  "utf8",
+).replace(/^export\s*\{\s*\};?$/m, "");
+writeFileSync(
+  join(ROOT, "metronome/worklet.js"),
+  `export const WORKLET_SRC = ${JSON.stringify(processor)};\n`,
+);
+rmSync(join(ROOT, "metronome/worklet-processor.js"));
+rmSync(join(ROOT, "metronome/worklet-processor.js.map"), { force: true });
 
 const files = walk(ROOT)
   .map((f) => relative(ROOT, f).split("\\").join("/"))
