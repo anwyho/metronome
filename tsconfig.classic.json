@@ -2,6 +2,8 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM"],
+    /* A module wrapper would stop these running during parse, which is the
+       whole reason they are <script src> and not modules. */
     "module": "preserve",
     "types": []
   },

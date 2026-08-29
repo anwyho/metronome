@@ -2,6 +2,8 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022", "WebWorker"],
+    /* A module wrapper would make sw.js a module worker, which Safari before
+       16.4 refuses; neither file may contain a top-level import or export. */
     "module": "preserve",
     "types": []
   },
