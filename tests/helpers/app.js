@@ -24,6 +24,11 @@ export async function harness(options = {}) {
     async page() {
       const context = await browser.createBrowserContext();
       const page = await context.newPage();
+      /* Pinned so 'system' resolves the same way whatever the host machine's
+         appearance is set to; otherwise the theme tests only pass in Light. */
+      await page.emulateMediaFeatures([
+        { name: "prefers-color-scheme", value: "light" },
+      ]);
       page.errors = [];
       page.on("pageerror", (e) => page.errors.push(e.message));
       return page;
