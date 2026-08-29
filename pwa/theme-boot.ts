@@ -12,31 +12,40 @@
    the OS live. */
 (function () {
   var KEY = "metro.theme";
-  var GROUND = { light: "#f5ead8", dark: "#1a1714" };
-  var ORDER = ["system", "light", "dark"];
+  var GROUND: Record<ThemeApi["resolved"], string> = {
+    light: "#f5ead8",
+    dark: "#1a1714",
+  };
+  var ORDER: ThemeApi["pref"][] = ["system", "light", "dark"];
   var mq = matchMedia("(prefers-color-scheme: dark)");
-  var pref;
+  var pref: ThemeApi["pref"] = "system";
   try {
-    pref = localStorage.getItem(KEY);
+    pref = localStorage.getItem(KEY) as ThemeApi["pref"];
   } catch (e) {}
   if (ORDER.indexOf(pref) < 1) pref = "system";
 
   function apply() {
-    var resolved = pref === "system" ? (mq.matches ? "dark" : "light") : pref;
+    var resolved: ThemeApi["resolved"] =
+      pref === "system" ? (mq.matches ? "dark" : "light") : pref;
     document.documentElement.setAttribute("data-theme", resolved);
-    var meta = document.querySelector('meta[name="theme-color"]');
+    var meta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
     if (meta) meta.content = GROUND[resolved];
     api.pref = pref;
     api.resolved = resolved;
     dispatchEvent(new Event("themechange"));
   }
 
-  var api = (window.__theme = {
+  var api: ThemeApi = (window.__theme = {
     pref: pref,
     resolved: "light",
     order: ORDER,
-    set: function (p) {
-      pref = ORDER.indexOf(p) < 0 ? "system" : p;
+    set: function (p: string) {
+      pref =
+        ORDER.indexOf(p as ThemeApi["pref"]) < 0
+          ? "system"
+          : (p as ThemeApi["pref"]);
       try {
         if (pref === "system") localStorage.removeItem(KEY);
         else localStorage.setItem(KEY, pref);
@@ -44,7 +53,7 @@
       apply();
     },
     cycle: function () {
-      api.set(ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]);
+      api.set(ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]!);
     },
   });
 

@@ -9,7 +9,6 @@
     "ui/**/*",
     "pwa/**/*",
     "tests/**/*",
-    "tools/serve.ts",
     "types/**/*"
   ],
   "exclude": [
@@ -17,6 +16,7 @@
     "pwa/register.ts",
     "pwa/theme-boot.ts",
     "sw.ts",
+    "types/worker.d.ts",
     "dist"
   ]
 }

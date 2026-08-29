@@ -9,23 +9,26 @@ import {
   workerActive,
 } from "../helpers/app.js";
 
+type Harness = Awaited<ReturnType<typeof harness>>;
+type TestPage = Awaited<ReturnType<Harness["page"]>>;
+
 const CACHE = "metronome-" + BUILD;
 
 describe("service worker", () => {
-  let h;
+  let h: Harness;
   before(async () => {
     h = await harness();
   });
   after(() => h.close());
 
-  const load = async (page) => {
+  const load = async (page: TestPage) => {
     await page.goto(h.server.url, { waitUntil: "domcontentloaded" });
     return workerActive(page);
   };
 
   /* Relative to where the app is mounted. The app has a `metronome/` directory
      of its own, so trimming to the last "metronome/" would eat it. */
-  const cacheKeys = (page) =>
+  const cacheKeys = (page: TestPage) =>
     page.evaluate(
       async (name, base) => {
         const names = await caches.keys();

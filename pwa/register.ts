@@ -10,7 +10,7 @@
     update: false,
   });
 
-  const set = (patch) => {
+  const set = (patch: Partial<SwInfo>) => {
     Object.assign(info, patch);
     dispatchEvent(new Event("swinfo"));
   };

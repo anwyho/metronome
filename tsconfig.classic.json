@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "module": "preserve",
+    "types": []
+  },
+  "include": ["pwa/register.ts", "pwa/theme-boot.ts", "types/globals.d.ts"]
+}

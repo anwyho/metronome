@@ -23,7 +23,12 @@ export async function harness(options = {}) {
     browser,
     async page() {
       const context = await browser.createBrowserContext();
-      const page = await context.newPage();
+      /* The `errors` array below is not part of puppeteer's Page; naming it
+         here is what lets a .ts spec read it. */
+      const page =
+        /** @type {import("puppeteer").Page & { errors: string[] }} */ (
+          await context.newPage()
+        );
       /* Pinned so 'system' resolves the same way whatever the host machine's
          appearance is set to; otherwise the theme tests only pass in Light. */
       await page.emulateMediaFeatures([

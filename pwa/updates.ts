@@ -4,11 +4,11 @@
 
 const info = () => window.__swInfo;
 
-export const workerVersion = () => info()?.version ?? null;
-export const updateReady = () => !!info()?.update;
-export const applyUpdate = () => window.__applyUpdate?.();
+export const workerVersion = (): string | null => info()?.version ?? null;
+export const updateReady = (): boolean => !!info()?.update;
+export const applyUpdate = (): void => window.__applyUpdate?.();
 
-export function onWorkerInfo(listener) {
+export function onWorkerInfo(listener: EventListener): () => void {
   addEventListener("swinfo", listener);
   return () => removeEventListener("swinfo", listener);
 }

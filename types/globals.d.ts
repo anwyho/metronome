@@ -1,4 +1,11 @@
-export {};
+/* The theme choice of the three, and the light or dark it currently means.
+   They live here rather than in metronome/prefs.ts because pwa/theme-boot.ts
+   compiles in its own program, and a module import from this file would pull
+   metronome/ into that program and emit it twice. `metronome/prefs.ts`
+   re-exports them, so app code still reads them from where the rest of the
+   device preferences live. */
+export type ThemePref = "system" | "light" | "dark";
+export type Resolved = "light" | "dark";
 
 declare global {
   interface AudioSession {
@@ -9,8 +16,8 @@ declare global {
   }
 
   interface ThemeApi {
-    pref: import("../metronome/prefs.js").ThemePref;
-    resolved: import("../metronome/prefs.js").Resolved;
+    pref: ThemePref;
+    resolved: Resolved;
     order: readonly string[];
     set(p: string): void;
     cycle(): void;

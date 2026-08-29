@@ -16,7 +16,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+/** @param {string} p */
 const from = (p) => join(ROOT, "node_modules", p);
+/** @param {string} pkg */
 const version = (pkg) =>
   JSON.parse(readFileSync(from(pkg + "/package.json"), "utf8")).version;
 
@@ -34,6 +36,7 @@ const MODULES = [
   { out: "htm.module.js", src: "htm/dist/htm.module.js", pkg: "htm" },
 ];
 
+/** @param {{ out: string; src: string; pkg: string }} module */
 function build({ src, pkg }) {
   const banner = `/* ${pkg}@${version(pkg)} — vendored by tools/vendor.mjs, do not edit */\n`;
   return (

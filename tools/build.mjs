@@ -29,6 +29,7 @@ const SKIP_FILES = new Set([
   "package-lock.json",
 ]);
 
+/** @param {string} dir @returns {string[]} */
 function walk(dir) {
   const out = [];
   for (const name of readdirSync(dir).sort()) {
@@ -45,6 +46,7 @@ function walk(dir) {
 /* Not shipped: prose, wherever it sits in the tree; the .svg icons the .png the
    app references were drawn from; and pwa/theme-boot.js, the source the inline
    snippet in index.html is checked against. */
+/** @param {string} f */
 const SOURCES = (f) =>
   f.endsWith(".svg") ||
   f.endsWith(".md") ||
@@ -112,6 +114,7 @@ const prevVersion = (sw.match(/const VERSION = "([^"]*)"/) || [])[1];
 function stampedVersion() {
   if (build === prevBuild) return prevVersion;
   const d = new Date();
+  /** @param {number} n */
   const p2 = (n) => String(n).padStart(2, "0");
   return (
     `${p2(d.getFullYear() % 100)}${p2(d.getMonth() + 1)}${p2(d.getDate())}` +

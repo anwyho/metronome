@@ -5,9 +5,9 @@
 
 /* The theme choice of the three, and the light or dark it currently means.
    The store does not own the theme — `pwa/theme.js` does — but the choice is a
-   device preference like the rest of these, so its type lives here. */
-export type ThemePref = "system" | "light" | "dark";
-export type Resolved = "light" | "dark";
+   device preference like the rest of these, so this is where it is read from.
+   Defined in types/globals.d.ts; see the note there. */
+export type { Resolved, ThemePref } from "../types/globals.js";
 
 /* What comes back out of the record. Every field is `unknown`, not the type it
    is written as: the value is whatever an older build, or a hand-edited

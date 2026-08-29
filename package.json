@@ -6,9 +6,9 @@
   "description": "An offline-first PWA template, with a metronome as its reference app.",
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "compile": "tsc -p tsconfig.json",
+    "compile": "tsc -p tsconfig.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.classic.json",
     "build": "npm run clean && npm run compile && node tools/copy-static.mjs && node tools/build.mjs",
-    "check": "tsc -p tsconfig.json --noEmit",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit && tsc -p tsconfig.classic.json --noEmit && tsc -p tsconfig.tools.json",
     "vendor": "node tools/vendor.mjs",
     "site": "bash tools/build-site.sh",
     "serve": "npm run build && node dist/tools/serve.js",
@@ -20,6 +20,7 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@types/node": "^26.4.0",
     "htm": "^3.1.1",
     "preact": "^10.29.8",
     "prettier": "^3.6.2",
