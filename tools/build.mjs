@@ -7,6 +7,7 @@
 
 import { createHash } from "node:crypto";
 import {
+  existsSync,
   readdirSync,
   readFileSync,
   rmSync,
@@ -53,17 +54,22 @@ const SOURCES = (f) =>
 
 /* The processor runs in the audio thread, compiled from a Blob rather than fetched,
    so the click never waits on a request. It is authored as a real module and
-   type-checked; this inlines the compiled output as the string addModule() needs. */
-const processor = readFileSync(
-  join(ROOT, "metronome/worklet-processor.js"),
-  "utf8",
-).replace(/^export\s*\{\s*\};?$/m, "");
-writeFileSync(
-  join(ROOT, "metronome/worklet.js"),
-  `export const WORKLET_SRC = ${JSON.stringify(processor)};\n`,
-);
-rmSync(join(ROOT, "metronome/worklet-processor.js"));
-rmSync(join(ROOT, "metronome/worklet-processor.js.map"), { force: true });
+   type-checked; this inlines the compiled output as the string addModule() needs.
+   Guarded so a re-run (e.g. `node tools/build.mjs --check` without a preceding
+   compile) is a no-op rather than a crash on its own already-consumed input. */
+const processorPath = join(ROOT, "metronome/worklet-processor.js");
+if (existsSync(processorPath)) {
+  const processor = readFileSync(processorPath, "utf8")
+    .replace(/^export\s*\{\s*\};?$/m, "")
+    .replace(/^\/\/# sourceMappingURL=.*$/m, "");
+  writeFileSync(
+    join(ROOT, "metronome/worklet.js"),
+    `export const WORKLET_SRC = ${JSON.stringify(processor)};\n`,
+  );
+  rmSync(processorPath);
+  rmSync(`${processorPath}.map`, { force: true });
+  rmSync(join(ROOT, "metronome/worklet.js.map"), { force: true });
+}
 
 const files = walk(ROOT)
   .map((f) => relative(ROOT, f).split("\\").join("/"))
