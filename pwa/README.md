@@ -1,38 +1,42 @@
 # pwa/
 
 The offline-first shell, with nothing in it that knows what the app is. Copy
-this directory, `sw.js`, `tools/build.mjs` and the head of `index.html` into
-another project and you have the same guarantees: it launches from cache with
-no network, it notices its own deploys, and it settles its theme before the
-first paint.
+this directory, `sw.ts`, the build tools and tsconfigs into another project
+and you have the same guarantees: it launches from cache with no network, it
+notices its own deploys, and it settles its theme before the first paint. See
+the root [README](../README.md#reusing-the-shell) for the full copy list and
+[`AGENTS.md`](AGENTS.md) for the constraints that matter when you do —
+each one has a failure mode that is silent.
 
 | File            | What it is                                             |
 | --------------- | ------------------------------------------------------ |
-| `sw-runtime.js` | the worker: precache, fetch strategy, update detection |
-| `register.js`   | registration and the update surface — a classic script |
-| `updates.js`    | the module-side read of what `register.js` found       |
-| `theme-boot.js` | the source of the inline snippet in `index.html`       |
-| `theme.js`      | the module-side read of what the boot decided          |
-| `install.js`    | whether an install hint is worth offering              |
+| `sw-runtime.ts` | the worker: precache, fetch strategy, update detection |
+| `register.ts`   | registration and the update surface — a classic script |
+| `updates.ts`    | the module-side read of what `register.ts` found       |
+| `theme-boot.ts` | the source of the inline snippet in `index.html`       |
+| `theme.ts`      | the module-side read of what the boot decided          |
+| `install.ts`    | whether an install hint is worth offering              |
+
+`sw-runtime.ts`, `register.ts` and `theme-boot.ts` compile to classic
+scripts, not modules — see `AGENTS.md` for why that is load-bearing and how
+it is enforced.
 
 ## Wiring it up
 
 `index.html`, in this order:
 
 ```html
-<script>
-  /* the contents of theme-boot.js, inline */
-</script>
+<script data-theme-boot></script>
 <script src="pwa/register.js"></script>
 <script type="module" src="ui/main.js"></script>
 ```
 
-The theme snippet is inline because it has to stamp `<html>` ahead of the first
-paint, and a `<script src>` would be a network round trip in front of it.
-`register.js` is a classic script rather than a module so it runs during parse:
-the worker is being checked while the module graph is still loading.
-`tools/build.mjs --check` fails if the inline copy has drifted from
-`theme-boot.js`.
+`tools/inline.mjs` replaces the `data-theme-boot` placeholder with the
+compiled contents of `theme-boot.ts` at build time — inline, because it has to
+stamp `<html>` ahead of the first paint, and a `<script src>` would be a
+network round trip in front of it. `register.js` runs during parse, before
+that `<script type="module">`: the worker is already being checked while the
+module graph is still loading.
 
 `sw.js` sits at the root, because the scope it claims is the directory it is
 served from:
@@ -48,9 +52,9 @@ offlineWorker({
 });
 ```
 
-`tools/build.mjs` writes that generated block by walking what is on disk, so
-the precache list cannot drift from the shipped files. Run it after changing
-any shipped file; `--check` runs in the deploy build and fails it if stale.
+`tools/build.mjs` writes that generated block into `dist/sw.js` by walking
+what actually landed in `dist/`, so the precache list cannot drift from the
+shipped files — see the root README for where that fits in the build.
 
 ## What it guarantees, and what it costs
 

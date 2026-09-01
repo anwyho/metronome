@@ -18,41 +18,57 @@ no audio files to load.
 
 ## Reusing the shell
 
-Copy `pwa/`, `sw.js`, `tools/build.mjs` and the head of `index.html` into
-another project. **[`pwa/README.md`](pwa/README.md)** is the guide: what each
-file does, how they are wired up, what each guarantee costs, and the handful of
-things that look like details and are not — why the shell is precached as `./`
-and never as `index.html`, why the precache is filled by hand rather than with
-`addAll`, why the worker messages the client a navigation is _creating_ rather
-than the one it replaces.
+Copy `pwa/`, `sw.ts`, `tools/build.mjs`, `tools/inline.mjs`,
+`tools/copy-static.mjs`, `tools/check-scripts.mjs`, the tsconfigs, and the head
+of `index.html` into another project. **[`pwa/README.md`](pwa/README.md)** is
+the guide: what each file does, how they are wired up, and what each guarantee
+costs. **[`pwa/AGENTS.md`](pwa/AGENTS.md)** is the constraint list — the
+handful of things that look like details and are not, each with a failure mode
+that is silent.
 
 ## Run it
 
-There is no bundler, and the whole app is plain files. That is a deliberate
-property: any static file server serves it, and there is no build step in front
-of a local edit.
-
 ```sh
-python3 -m http.server 8000
-# then open http://127.0.0.1:8000/
+npm ci
+npm run build   # compile, copy static files, inline the theme boot, generate the precache list
+npm run serve   # build, then serve dist/ the way the deployed origin does
 ```
 
 Service workers need `localhost` or HTTPS — `127.0.0.1` is fine, a `file://`
-URL is not. `node tools/serve.mjs` serves the same tree the way the deployed
-origin does, including the 307 from `/index.html` to the directory form, which
-is worth exercising before a deploy.
+URL is not. `npm run serve` reproduces the deployed origin's 307 from
+`/index.html` to the directory form, which is worth exercising before a
+deploy — see [Reusing the shell](#reusing-the-shell) for why that redirect
+matters.
 
-What the no-build path costs, stated: a cold first load pays an import
-waterfall two levels deep, which every later load skips because the worker
-precaches the whole graph; nothing is tree-shaken, so what is vendored is what
-ships; and there is no JSX, so the UI is written with
-[htm](https://github.com/developit/htm) tagged templates.
+The build compiles three programs, then walks the output:
+
+```
+tsc -p tsconfig.json           the app: metronome/, ui/, pwa/ modules, tests/, tools/serve
+tsc -p tsconfig.worker.json    sw.ts + pwa/sw-runtime.ts (lib: WebWorker)
+tsc -p tsconfig.classic.json   pwa/register.ts + pwa/theme-boot.ts (classic scripts)
+tools/check-scripts.mjs        asserts those three outputs stayed free of module syntax
+tools/copy-static.mjs          copies the files tsc doesn't emit
+tools/inline.mjs               injects the compiled theme boot into dist/index.html,
+                                hashes every inline script for the CSP
+tools/build.mjs                regenerates sw.js's precache list, VERSION and BUILD
+                                from what actually landed in dist/
+```
+
+`npm run check` type-checks the same three programs with `--noEmit`, plus a
+fourth: `tsconfig.tools.json` runs `checkJs` over `tools/*.mjs` and emits
+nothing. It exists only for the check, not the build.
+
+That buys strict type checking — including the audio processor and the UI
+markup — not bundling. Nothing is tree-shaken, so what is vendored is what
+ships, and a cold first load still pays an import waterfall across the module
+graph; every later load skips it, because the worker precaches the whole tree.
+The UI is TSX, compiled with the classic JSX runtime (`jsxFactory: "h"`);
+[htm](https://github.com/developit/htm) tagged templates are gone.
 
 ```sh
-npm install          # Prettier, Puppeteer, and the sources vendor/ is built from
-npm test             # unit tests under node:test, browser tests under Puppeteer
+npm test             # 42 unit tests under node:test, 28 browser tests under Puppeteer
 npm run format       # Prettier
-npm run vendor       # re-copy Preact + htm out of node_modules into vendor/
+npm run vendor       # re-copy Preact out of node_modules into vendor/
 npm run site         # assemble _site/ the way the deploy does
 ```
 
@@ -64,40 +80,43 @@ another.
 ## After changing any shipped file
 
 ```sh
-node tools/build.mjs          # rewrite the generated block in sw.js
-node tools/build.mjs --check  # exit 1 if stale; runs in the deploy build
+npm run build   # dist/ is regenerated in full, including sw.js's precache list
+npm run check   # type-checks all four programs with no build output
 ```
 
-`sw.js` carries a generated block — the precache list, a `VERSION` and a
-`BUILD` — written by walking what is actually on disk, so the list cannot drift
-from the shipped files. Regenerate it or the change ships to nobody. The same
-command checks that the inline theme boot in `index.html` still matches
-`pwa/theme-boot.js`, and `tools/build-site.sh` checks that every precached path
-made it into `_site/`.
+`dist/` is rebuilt from scratch every time, so there is no staleness to check
+for between builds — a changed file is either compiled and copied in, or it
+isn't shipped. `tools/build-site.sh` still checks that every path `sw.js`
+precaches made it into `_site/`: that copy list is written by hand, and the
+precache list is not.
 
 ## Layout
 
 ```
-index.html          the shell: PWA head, inline theme boot, the module entry
-sw.js               configuration + the generated block; imports the runtime
-pwa/                the reusable shell — see pwa/README.md
+index.html          the shell: PWA head, inline theme boot placeholder, the module entry
+sw.ts               configuration + the generated block; imports the runtime
+pwa/                the reusable shell — see pwa/README.md and pwa/AGENTS.md
 metronome/          the domain: worklet, timing, pattern, tempo, swing, share,
                     prefs, engine, store. No DOM in any of it.
-ui/                 App, components/, hooks/, and layout.js
+ui/                 App.tsx, components/, hooks/, and layout.ts
 styles/             tokens.css (Organic) + base.css + app.css
-vendor/             Preact 10 + hooks + htm, as ES modules
+vendor/             Preact 10 + hooks, as ES modules; hand-written .d.ts beside each
+types/              ambient types: the JSX namespace, globals, the worker and worklet scopes
 fonts/ icons/       Caprasimo + Figtree (latin subset); the .svg are the .png sources
 tests/              node:test units, Puppeteer for the rest
-tools/              build.mjs, vendor.mjs, serve.mjs, build-site.sh
+tools/              build.mjs, inline.mjs, copy-static.mjs, check-scripts.mjs,
+                    vendor.mjs, serve.ts, build-site.sh
+tsconfig*.json      the three build programs, plus tools/*.mjs's checkJs-only pass
 _headers            cache headers; paths carry the /metronome prefix
 wrangler.jsonc      Workers Static Assets config + route
 docs/               the brief this restructure answered, and the plan
 ```
 
-`metronome/` holds no DOM and `ui/` holds no audio. The scheduling maths, the
-bar model, the tap averaging, the link format and the hold-repeat ramp are pure
-functions with direct unit tests; `engine.js` holds the audio context, the
-worklet node and the wake lock and no state at all.
+`dist/` and `_site/` are build output, not checked in. `metronome/` holds no
+DOM and `ui/` holds no audio. The scheduling maths, the bar model, the tap
+averaging, the link format and the hold-repeat ramp are pure functions with
+direct unit tests; `engine.ts` holds the audio context, the worklet node and
+the wake lock and no state at all.
 
 ## Sound and the screen
 
@@ -137,7 +156,7 @@ is measured from. Changing the tempo, the subdivision or the swing re-bases that
 anchor rather than restarting the count, which is what keeps the beat where the
 listener last heard it.
 
-Three things in `metronome/timing.js` are load-bearing, and each was a bug once:
+Three things in `metronome/timing.ts` are load-bearing, and each was a bug once:
 
 - The new anchor is taken from the transport's **fractional** position, not the
   tick it last sounded. Rounding down and taking that tick's pair lands on a
@@ -161,9 +180,9 @@ cover the frame's trip to the screen; without it the dot lights behind the click
 The beat grid box is **one height per viewport, whatever the beat count** — the
 cells shrink inside it. Sizing the box to its rows slides the tempo and the
 transport under the finger as beats are added. The reserve constants in
-`ui/layout.js` are measured from the laid-out screen; re-measure them if the
+`ui/layout.ts` are measured from the laid-out screen; re-measure them if the
 layout changes. They were wrong once and pushed the settings chevron off the
-bottom of a small phone. `tests/layout.test.js` measures geometry rather than
+bottom of a small phone. `tests/layout.test.ts` measures geometry rather than
 diffing screenshots, because a measurement says which element moved.
 
 The swing name slot always holds a line box, blank or not. The row aligns on the
@@ -182,8 +201,10 @@ Cloudflare Workers (Static Assets), deployed from Git via Workers Builds.
 | Non-production branch builds | off                        |
 | Cloudflare Access            | off — it is a public app   |
 
-`tools/build-site.sh` runs `build.mjs --check` (so a stale precache list fails
-the deploy rather than breaking cold launches) and assembles `_site/`:
+`tools/build-site.sh` runs the full build, then assembles `_site/` and checks
+that every path `sw.js` precaches made it into the copy — a path in the
+generated precache list and not in the hand-written copy is a cold launch
+that 404s:
 
 ```
 _site/_headers              must sit at the assets root to be read
