@@ -1,6 +1,8 @@
 /* Regenerates the precache list and version hash in sw.js by walking what is
    actually on disk, so the list cannot drift from the shipped files. Drift only
    breaks a cold or slow launch, which is exactly the launch nobody tests by hand.
+   Runs after tools/inline.mjs, so BUILD hashes the shell with the theme boot
+   already inlined rather than the placeholder.
 
    node tools/build.mjs          rewrite sw.js
    node tools/build.mjs --check  exit 1 if sw.js is stale */
@@ -44,8 +46,8 @@ function walk(dir) {
 }
 
 /* Not shipped: prose, wherever it sits in the tree; the .svg icons the .png the
-   app references were drawn from; and pwa/theme-boot.js, the source the inline
-   snippet in index.html is checked against. */
+   app references were drawn from; and pwa/theme-boot.js, which tools/inline.mjs
+   generates the inline copy in index.html from rather than shipping as a file. */
 /** @param {string} f */
 const SOURCES = (f) =>
   f.endsWith(".svg") ||

@@ -374,4 +374,20 @@ describe("app", () => {
   it("renders without a single page error", async () => {
     assert.deepEqual(page.errors, []);
   });
+
+  it("boots with the deployed CSP in force, and blocks nothing", async () => {
+    const violations: string[] = [];
+    page.on("console", (m) => {
+      if (/Content Security Policy/i.test(m.text())) violations.push(m.text());
+    });
+    await open();
+    assert.deepEqual(violations, []);
+    const theme = await page.evaluate(
+      () => document.documentElement.dataset.theme,
+    );
+    assert.ok(
+      theme === "light" || theme === "dark",
+      "theme boot ran under CSP",
+    );
+  });
 });

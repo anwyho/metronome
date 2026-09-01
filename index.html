@@ -41,56 +41,9 @@
       crossorigin
     />
 
-    <!-- Inline, because it has to land ahead of first paint. The source of
-         truth is pwa/theme-boot.js; `node tools/build.mjs --check` fails if
-         this copy has drifted from it. -->
-    <script>
-      (function () {
-        var KEY = "metro.theme";
-        var GROUND = { light: "#f5ead8", dark: "#1a1714" };
-        var ORDER = ["system", "light", "dark"];
-        var mq = matchMedia("(prefers-color-scheme: dark)");
-        var pref;
-        try {
-          pref = localStorage.getItem(KEY);
-        } catch (e) {}
-        if (ORDER.indexOf(pref) < 1) pref = "system";
-
-        function apply() {
-          var resolved =
-            pref === "system" ? (mq.matches ? "dark" : "light") : pref;
-          document.documentElement.setAttribute("data-theme", resolved);
-          var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.content = GROUND[resolved];
-          api.pref = pref;
-          api.resolved = resolved;
-          dispatchEvent(new Event("themechange"));
-        }
-
-        var api = (window.__theme = {
-          pref: pref,
-          resolved: "light",
-          order: ORDER,
-          set: function (p) {
-            pref = ORDER.indexOf(p) < 0 ? "system" : p;
-            try {
-              if (pref === "system") localStorage.removeItem(KEY);
-              else localStorage.setItem(KEY, pref);
-            } catch (e) {}
-            apply();
-          },
-          cycle: function () {
-            api.set(ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]);
-          },
-        });
-
-        /* An explicit Light or Dark outranks the OS; only 'system' tracks it. */
-        mq.addEventListener("change", function () {
-          if (pref === "system") apply();
-        });
-        apply();
-      })();
-    </script>
+    <!-- The theme has to be stamped on <html> before first paint, which rules out a
+         <script src>. tools/inline.mjs injects the compiled pwa/theme-boot.js here. -->
+    <script data-theme-boot></script>
 
     <link rel="stylesheet" href="styles/tokens.css" />
     <link rel="stylesheet" href="styles/base.css" />

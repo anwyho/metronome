@@ -6,9 +6,12 @@ type Harness = Awaited<ReturnType<typeof harness>>;
 
 /* Proves the no-build path end to end: the browser resolves the vendored
    modules by itself, with no import map and no bundler, because vendor.mjs
-   rewrote the one bare specifier they contain. */
+   rewrote the one bare specifier they contain. External, not inline, so the
+   deployed CSP's script-src (no 'unsafe-inline') does not stand in for the
+   thing this test is actually proving. */
 const PROBE = `<!doctype html><meta charset="utf-8"><div id="root"></div>
-<script type="module">
+<script type="module" src="probe.js"></script>`;
+const PROBE_JS = `
   import { h, render } from "./vendor/preact.module.js";
   import { useState } from "./vendor/hooks.module.js";
   const App = () => {
@@ -16,12 +19,14 @@ const PROBE = `<!doctype html><meta charset="utf-8"><div id="root"></div>
     return h("p", null, "rendered " + n);
   };
   render(h(App), document.getElementById("root"));
-</script>`;
+`;
 
 describe("vendored modules", () => {
   let h: Harness;
   before(async () => {
-    h = await harness({ files: { "probe.html": PROBE } });
+    h = await harness({
+      files: { "probe.html": PROBE, "probe.js": PROBE_JS },
+    });
   });
   after(() => h.close());
 

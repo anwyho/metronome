@@ -1,6 +1,11 @@
 # Served from the assets root. Paths are absolute URL paths, so they carry the
 # /metronome prefix the app is deployed under.
 
+/metronome/*
+  Content-Security-Policy: @CSP@
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
 # A cached worker script is an app that can never update. The runtime it
 # imports joins the worker's stored scripts, and is compared on the same check.
 /metronome/sw.js
@@ -24,3 +29,21 @@
 
 /metronome/icons/*
   Cache-Control: public, max-age=604800
+
+# The worker's precache is what actually invalidates these, via a content hash
+# over every shipped byte, so the filename never needs to carry one. Revalidating
+# costs a conditional request and keeps a deploy from being served stale.
+/metronome/styles/*
+  Cache-Control: no-cache
+
+/metronome/ui/*
+  Cache-Control: no-cache
+
+/metronome/metronome/*
+  Cache-Control: no-cache
+
+/metronome/pwa/*
+  Cache-Control: no-cache
+
+/metronome/vendor/*
+  Cache-Control: no-cache

@@ -50,17 +50,49 @@ interface ServerHandle {
   close: () => Promise<void>;
 }
 
-/* Mirrors _headers. The worker diffs the shell to detect a deploy, so an
-   intermediary holding it stale would hide every content-only change. */
-function cacheControl(rel: string): string | null {
-  if (rel === "sw.js" || rel === "index.html" || rel === "manifest.webmanifest")
-    return "no-cache";
-  if (rel.startsWith("fonts/")) return "public, max-age=31536000, immutable";
-  if (rel.startsWith("icons/")) return "public, max-age=604800";
-  /* _headers names no rule for the rest, so neither does this. Sending
-     `no-store` here instead deadlocked the worker's precache: Chrome stalls a
-     handful of the parallel fetches and the install never settles. */
-  return null;
+interface HeaderRule {
+  pattern: string;
+  headers: Record<string, string>;
+}
+
+/* Parses the Cloudflare _headers format: an unindented path pattern line
+   followed by indented "Key: value" lines. Reads dist/_headers rather than
+   hardcoding the policy a second time, so the browser tests exercise the CSP
+   tools/inline.mjs actually wrote — hashes and all — instead of a copy that
+   can drift from it. */
+function parseHeaders(text: string): HeaderRule[] {
+  const rules: HeaderRule[] = [];
+  let current: HeaderRule | null = null;
+  for (const raw of text.split("\n")) {
+    const line = raw.replace(/\r$/, "");
+    if (!line.trim() || line.trim().startsWith("#")) continue;
+    if (!/^[ \t]/.test(line)) {
+      current = { pattern: line.trim(), headers: {} };
+      rules.push(current);
+      continue;
+    }
+    if (!current) continue;
+    const i = line.indexOf(":");
+    if (i === -1) continue;
+    current.headers[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  }
+  return rules;
+}
+
+function matchesPattern(pattern: string, path: string): boolean {
+  if (pattern.endsWith("*")) return path.startsWith(pattern.slice(0, -1));
+  return path === pattern;
+}
+
+/* Rules are applied in file order and merged, so a later, more specific block
+   overrides an earlier, broader one for the same header key — the convention
+   _headers itself documents ("most-specific last"). */
+function headersFor(rules: HeaderRule[], path: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const rule of rules) {
+    if (matchesPattern(rule.pattern, path)) Object.assign(out, rule.headers);
+  }
+  return out;
 }
 
 export function startServer(
@@ -68,6 +100,9 @@ export function startServer(
 ): Promise<ServerHandle> {
   const root = options.root || ROOT;
   const mount = options.mount ?? "/metronome/";
+  const headerRules = parseHeaders(
+    readFileSync(join(root, "_headers"), "utf8"),
+  );
 
   /* Mutable mid-test: a scenario turns a file off, swaps its bytes to simulate
      a deploy, or makes the directory form redirect too. */
@@ -128,12 +163,16 @@ export function startServer(
     }
     if (typeof body === "string") body = Buffer.from(body);
 
-    const cache = cacheControl(rel);
+    /* A path _headers names no rule for gets no extra header here either.
+       Sending `no-store` as a fallback instead deadlocked the worker's
+       precache: Chrome stalls a handful of the parallel fetches and the
+       install never settles. */
+    const extra = headersFor(headerRules, mount + rel);
     const ext = rel.slice(rel.lastIndexOf("."));
     res.writeHead(200, {
       "Content-Type": TYPES[ext] || "application/octet-stream",
       "Content-Length": body.length,
-      ...(cache ? { "Cache-Control": cache } : {}),
+      ...extra,
     });
     res.end(req.method === "HEAD" ? undefined : body);
   });

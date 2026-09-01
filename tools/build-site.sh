@@ -10,7 +10,7 @@ npm run build
 mkdir -p _site/metronome
 cp -R dist/. _site/metronome/
 rm -rf _site/metronome/tests _site/metronome/tools
-cp _headers _site/_headers
+cp dist/_headers _site/_headers
 
 # The copy list above is written by hand; the precache list is generated. A
 # path in one and not the other is a cold launch that 404s, so check.

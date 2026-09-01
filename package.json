@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "compile": "tsc -p tsconfig.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.classic.json && node tools/check-scripts.mjs",
-    "build": "npm run clean && npm run compile && node tools/copy-static.mjs && node tools/build.mjs",
+    "build": "npm run clean && npm run compile && node tools/copy-static.mjs && node tools/inline.mjs && node tools/build.mjs",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit && tsc -p tsconfig.classic.json --noEmit && tsc -p tsconfig.tools.json",
     "vendor": "node tools/vendor.mjs",
     "site": "bash tools/build-site.sh",
