@@ -2,9 +2,12 @@ import { strict as assert } from "node:assert";
 import { after, before, describe, it } from "node:test";
 import { harness, settle } from "../helpers/app.js";
 
+type Harness = Awaited<ReturnType<typeof harness>>;
+type TestPage = Awaited<ReturnType<Harness["page"]>>;
+
 describe("app", () => {
-  let h;
-  let page;
+  let h: Harness;
+  let page: TestPage;
 
   before(async () => {
     h = await harness();
@@ -22,25 +25,27 @@ describe("app", () => {
     await page.waitForFunction(() => /beats/.test(document.body.innerText));
     await settle(page, 3);
   };
-  const press = async (selector) => {
+  const press = async (selector: string) => {
     await page.click(selector);
     await settle(page, 3);
   };
-  const pressText = async (label) => {
+  const pressText = async (label: string) => {
     await page.evaluate(
       (l) =>
         [...document.querySelectorAll("button")]
-          .find((b) => b.textContent.trim() === l)
+          .find((b) => b.textContent!.trim() === l)!
           .click(),
       label,
     );
     await settle(page, 3);
   };
-  const drag = async (label, value) => {
+  const drag = async (label: string, value: number) => {
     await page.evaluate(
       (l, v) => {
-        const input = document.querySelector(`input[aria-label="${l}"]`);
-        input.value = v;
+        const input = document.querySelector<HTMLInputElement>(
+          `input[aria-label="${l}"]`,
+        )!;
+        input.value = String(v);
         input.dispatchEvent(new Event("input", { bubbles: true }));
       },
       label,
@@ -49,8 +54,8 @@ describe("app", () => {
     await settle(page, 3);
   };
   /* Press, wait, release — the three hold tests were each doing this by hand. */
-  const holdFor = async (selector, ms) => {
-    const box = await (await page.$(selector)).boundingBox();
+  const holdFor = async (selector: string, ms: number) => {
+    const box = (await (await page.$(selector))!.boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
     await new Promise((r) => setTimeout(r, ms));
@@ -62,9 +67,9 @@ describe("app", () => {
       },
     };
   };
-  const text = (selector) =>
+  const text = (selector: string) =>
     page.evaluate(
-      (s) => document.querySelector(s).textContent.trim(),
+      (s) => document.querySelector(s)!.textContent!.trim(),
       selector,
     );
 
@@ -73,13 +78,17 @@ describe("app", () => {
     assert.equal(await text(".tempo__marking"), "Andante");
     await press('[aria-label="Increase tempo"]');
     assert.equal(
-      await page.evaluate(() => document.querySelector(".tempo__input").value),
+      await page.evaluate(
+        () => document.querySelector<HTMLInputElement>(".tempo__input")!.value,
+      ),
       "101",
     );
     await press('[aria-label="Decrease tempo"]');
     await press('[aria-label="Decrease tempo"]');
     assert.equal(
-      await page.evaluate(() => document.querySelector(".tempo__input").value),
+      await page.evaluate(
+        () => document.querySelector<HTMLInputElement>(".tempo__input")!.value,
+      ),
       "99",
     );
   });
@@ -88,7 +97,10 @@ describe("app", () => {
     await open("#bpm=100&beats=Xooo&sub=1");
     const bpm = () =>
       page.evaluate(() =>
-        parseInt(document.querySelector(".tempo__input").value, 10),
+        parseInt(
+          document.querySelector<HTMLInputElement>(".tempo__input")!.value,
+          10,
+        ),
       );
 
     await press('[aria-label="Increase tempo"]');
@@ -114,7 +126,10 @@ describe("app", () => {
     await open("#bpm=100&beats=Xooo&sub=1");
     const bpm = () =>
       page.evaluate(() =>
-        parseInt(document.querySelector(".tempo__input").value, 10),
+        parseInt(
+          document.querySelector<HTMLInputElement>(".tempo__input")!.value,
+          10,
+        ),
       );
     const hold = await holdFor('[aria-label="Decrease tempo"]', 800);
     await page.mouse.move(hold.box.x + hold.box.width / 2, hold.box.y - 80);
@@ -163,9 +178,9 @@ describe("app", () => {
     await open("#bpm=100&beats=Xooo&sub=1");
     const read = () =>
       page.evaluate(() => ({
-        bpm: document.querySelector(".tempo__input").value,
+        bpm: document.querySelector<HTMLInputElement>(".tempo__input")!.value,
         beats: document.querySelectorAll(".cell__dot").length,
-        running: document.querySelector(".start").textContent.trim(),
+        running: document.querySelector(".start")!.textContent!.trim(),
       }));
 
     await page.keyboard.press("ArrowUp");
@@ -197,7 +212,9 @@ describe("app", () => {
     await press('[aria-label="Beat 2, beat"]');
     assert.equal(
       await page.evaluate(
-        () => document.querySelectorAll(".cell__dot")[1].dataset.level,
+        () =>
+          (document.querySelectorAll(".cell__dot")[1] as HTMLElement).dataset
+            .level,
       ),
       "minor",
     );
@@ -220,7 +237,7 @@ describe("app", () => {
       { timeout: 5000 },
     );
     await page.waitForFunction(() =>
-      /bars/.test(document.querySelector(".counters").textContent),
+      /bars/.test(document.querySelector(".counters")!.textContent!),
     );
     await pressText("Stop");
     assert.equal(await text(".start"), "Start");
@@ -243,7 +260,9 @@ describe("app", () => {
     await open("#bpm=100&beats=Xooo&sub=1");
     const disabled = () =>
       page.evaluate(
-        () => document.querySelector('input[aria-label="Swing"]').disabled,
+        () =>
+          document.querySelector<HTMLInputElement>('input[aria-label="Swing"]')!
+            .disabled,
       );
     assert.equal(await disabled(), true);
     await drag("Clicks per beat", 3);
@@ -256,7 +275,7 @@ describe("app", () => {
        it move. */
     const note = () =>
       page.evaluate(() => {
-        const el = document.querySelector(".field__note");
+        const el = document.querySelector(".field__note")!;
         return {
           shown: getComputedStyle(el).visibility === "visible",
           height: Math.round(el.getBoundingClientRect().height),
@@ -271,7 +290,7 @@ describe("app", () => {
     await drag("Clicks per beat", 4);
     const swingName = () =>
       page.evaluate(() =>
-        document.querySelectorAll(".field__value")[1].textContent.trim(),
+        document.querySelectorAll(".field__value")[1]!.textContent!.trim(),
       );
     await drag("Swing", 67);
     assert.equal(await swingName(), "Swing");
@@ -283,7 +302,9 @@ describe("app", () => {
     assert.equal(await swingName(), "5%");
     assert.deepEqual(
       await page.evaluate(() => {
-        const el = document.querySelector('input[aria-label="Swing"]');
+        const el = document.querySelector<HTMLInputElement>(
+          'input[aria-label="Swing"]',
+        )!;
         return { min: el.min, max: el.max };
       }),
       { min: "5", max: "95" },
@@ -305,7 +326,7 @@ describe("app", () => {
     const theme = () =>
       page.evaluate(() => ({
         stamped: document.documentElement.dataset.theme,
-        label: document.querySelector(".theme").textContent.trim(),
+        label: document.querySelector(".theme")!.textContent!.trim(),
       }));
     assert.deepEqual(await theme(), { stamped: "light", label: "System" });
     await press(".theme");
@@ -327,20 +348,24 @@ describe("app", () => {
   it("restores the pattern a link carries", async () => {
     await open("#bpm=144&beats=Xxo.Xo&sub=2&swing=60");
     assert.equal(
-      await page.evaluate(() => document.querySelector(".tempo__input").value),
+      await page.evaluate(
+        () => document.querySelector<HTMLInputElement>(".tempo__input")!.value,
+      ),
       "144",
     );
     assert.deepEqual(
       await page.evaluate(() =>
         [...document.querySelectorAll(".cell__dot")].map(
-          (d) => d.dataset.level,
+          (d) => (d as HTMLElement).dataset.level,
         ),
       ),
       ["accent", "minor", "normal", "muted", "accent", "normal"],
     );
     assert.equal(
       await page.evaluate(
-        () => document.querySelector('input[aria-label="Swing"]').value,
+        () =>
+          document.querySelector<HTMLInputElement>('input[aria-label="Swing"]')!
+            .value,
       ),
       "60",
     );

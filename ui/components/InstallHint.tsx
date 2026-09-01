@@ -1,15 +1,17 @@
-import { html } from "../html.js";
+import { h } from "../../vendor/preact.module.js";
 
 /* Share-sheet instructions, which only mean anything on a touch device: iOS
    has no programmatic install to offer instead. */
-export function InstallHint({ onDismiss }) {
-  return html`
+export function InstallHint({ onDismiss }: { onDismiss: () => void }) {
+  return (
     <div class="install">
       <span>
         Keep it on your home screen — tap Share, then
         <strong>Add to Home Screen</strong>.
       </span>
-      <button aria-label="Dismiss" onClick=${onDismiss}>×</button>
+      <button aria-label="Dismiss" onClick={onDismiss}>
+        ×
+      </button>
     </div>
-  `;
+  );
 }

@@ -1,4 +1,4 @@
-import { html } from "../html.js";
+import { h } from "../../vendor/preact.module.js";
 import { useServiceWorker } from "../hooks/useServiceWorker.js";
 
 /* Checking is silent. Finding something raises the offer beside the version it
@@ -6,12 +6,10 @@ import { useServiceWorker } from "../hooks/useServiceWorker.js";
    interrupts a running metronome. */
 export function UpdateRow() {
   const { version, update, apply } = useServiceWorker();
-  return html`
+  return (
     <div class="version">
-      <span>Version ${version || "—"}</span>
-      ${
-        update ? html`<button onClick=${apply}>Update available</button>` : null
-      }
+      <span>Version {version || "—"}</span>
+      {update ? <button onClick={apply}>Update available</button> : null}
     </div>
-  `;
+  );
 }

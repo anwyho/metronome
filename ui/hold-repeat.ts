@@ -21,7 +21,7 @@ export const MAX_RATE = 120;
    linear climb is already well past four steps a second by the time the first
    repeat lands, and the opening of a hold is exactly the part that has to stay
    usable for a nudge of two or three. */
-export function stepsAfter(held, maxRate = MAX_RATE) {
+export function stepsAfter(held: number, maxRate = MAX_RATE): number {
   const t = held - HOLD_DELAY;
   if (!(t > 0)) return 0;
   const ramped = Math.min(t, RAMP_SECONDS);

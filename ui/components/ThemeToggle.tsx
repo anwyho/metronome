@@ -1,9 +1,14 @@
-import { html } from "../html.js";
+import { h } from "../../vendor/preact.module.js";
 import { useTheme } from "../hooks/useTheme.js";
+
+interface Theme {
+  label: string;
+  icon: string;
+}
 
 /* Single-path Lucide sun-moon / sun / moon, so the icon is one bound attribute
    rather than three conditional blocks. */
-const THEMES = {
+const THEMES: Record<string, Theme> = {
   system: {
     label: "System",
     icon: "M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4",
@@ -17,15 +22,15 @@ const THEMES = {
 
 export function ThemeToggle() {
   const { pref, cycle } = useTheme();
-  const theme = THEMES[pref] || THEMES.system;
+  const theme = THEMES[pref] || THEMES.system!;
   const description = `Appearance: ${theme.label}. Tap to change.`;
 
-  return html`
+  return (
     <button
       class="theme"
-      aria-label=${description}
-      title=${description}
-      onClick=${cycle}
+      aria-label={description}
+      title={description}
+      onClick={cycle}
     >
       <svg
         width="18"
@@ -38,9 +43,9 @@ export function ThemeToggle() {
         stroke-linejoin="round"
         aria-hidden="true"
       >
-        <path d=${theme.icon}></path>
+        <path d={theme.icon}></path>
       </svg>
-      ${theme.label}
+      {theme.label}
     </button>
-  `;
+  );
 }

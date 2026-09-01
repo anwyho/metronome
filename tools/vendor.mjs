@@ -33,7 +33,6 @@ const MODULES = [
     src: "preact/hooks/dist/hooks.module.js",
     pkg: "preact",
   },
-  { out: "htm.module.js", src: "htm/dist/htm.module.js", pkg: "htm" },
 ];
 
 /** @param {{ out: string; src: string; pkg: string }} module */

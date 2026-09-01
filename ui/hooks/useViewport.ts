@@ -1,6 +1,12 @@
+import type { RefObject } from "preact";
 import { useEffect, useState } from "../../vendor/hooks.module.js";
 
-const read = (el) => {
+interface Viewport {
+  vw: number;
+  vh: number;
+}
+
+const read = (el: HTMLElement | null): Viewport => {
   const rect = el && el.getBoundingClientRect();
   return {
     vw: rect && rect.width ? rect.width : window.innerWidth,
@@ -11,7 +17,7 @@ const read = (el) => {
 /* Measures the shell rather than the window: on iOS the toolbars come and go
    under a window that reports the same height, and the grid's reserve is
    calculated against what the app actually has. */
-export function useViewport(ref) {
+export function useViewport(ref: RefObject<HTMLElement | null>): Viewport {
   const [size, setSize] = useState(() => read(null));
 
   useEffect(() => {

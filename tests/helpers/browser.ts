@@ -5,6 +5,7 @@
 
 import { existsSync } from "node:fs";
 import puppeteer from "puppeteer";
+import type { LaunchOptions } from "puppeteer";
 
 const SYSTEM = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
@@ -26,7 +27,7 @@ function chrome() {
   );
 }
 
-export function launch(options = {}) {
+export function launch(options: LaunchOptions = {}) {
   return puppeteer.launch({
     headless: true,
     executablePath: chrome(),

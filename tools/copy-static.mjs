@@ -12,7 +12,14 @@ const DIRS = ["styles", "vendor", "fonts", "icons"];
 
 mkdirSync(DIST, { recursive: true });
 for (const f of FILES) cpSync(join(ROOT, f), join(DIST, f));
-for (const d of DIRS) cpSync(join(ROOT, d), join(DIST, d), { recursive: true });
+for (const d of DIRS) {
+  cpSync(join(ROOT, d), join(DIST, d), {
+    recursive: true,
+    /* Type-only shims for the vendored runtime files — nothing the browser
+       ever fetches. */
+    filter: (src) => !src.endsWith(".d.ts"),
+  });
+}
 console.log(
   `copied ${FILES.length} files and ${DIRS.length} directories into dist/`,
 );

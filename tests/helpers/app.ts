@@ -4,38 +4,42 @@
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { Page } from "puppeteer";
 import { launch } from "./browser.js";
 import { startServer } from "../../tools/serve.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SW = readFileSync(join(ROOT, "sw.js"), "utf8");
 
-export const VERSION = SW.match(/const VERSION = "([^"]+)"/)[1];
-export const BUILD = SW.match(/const BUILD = "([^"]+)"/)[1];
-export const PRECACHE = [...SW.matchAll(/^ {2}"([^"]+)",$/gm)].map((m) => m[1]);
+export const VERSION = SW.match(/const VERSION = "([^"]+)"/)![1];
+export const BUILD = SW.match(/const BUILD = "([^"]+)"/)![1];
+export const PRECACHE = [...SW.matchAll(/^ {2}"([^"]+)",$/gm)].map(
+  (m) => m[1]!,
+);
 export const INDEX = readFileSync(join(ROOT, "index.html"), "utf8");
 
-export async function harness(options = {}) {
+type TestPage = Page & { errors: string[] };
+
+export async function harness(options: Parameters<typeof startServer>[0] = {}) {
   const server = await startServer(options);
   const browser = await launch();
   return {
     server,
     browser,
-    async page() {
+    async page(): Promise<TestPage> {
       const context = await browser.createBrowserContext();
       /* The `errors` array below is not part of puppeteer's Page; naming it
          here is what lets a .ts spec read it. */
-      const page =
-        /** @type {import("puppeteer").Page & { errors: string[] }} */ (
-          await context.newPage()
-        );
+      const page = (await context.newPage()) as TestPage;
       /* Pinned so 'system' resolves the same way whatever the host machine's
          appearance is set to; otherwise the theme tests only pass in Light. */
       await page.emulateMediaFeatures([
         { name: "prefers-color-scheme", value: "light" },
       ]);
       page.errors = [];
-      page.on("pageerror", (e) => page.errors.push(e.message));
+      page.on("pageerror", (e) =>
+        page.errors.push(e instanceof Error ? e.message : String(e)),
+      );
       return page;
     },
     async close() {
@@ -46,7 +50,7 @@ export async function harness(options = {}) {
 }
 
 /* Resolves false rather than hanging when the install is meant to fail. */
-export async function workerActive(page, timeout = 10000) {
+export async function workerActive(page: Page, timeout = 10000) {
   const until = Date.now() + timeout;
   while (Date.now() < until) {
     const active = await page.evaluate(() =>
@@ -60,22 +64,30 @@ export async function workerActive(page, timeout = 10000) {
   return false;
 }
 
-export const settle = (page, frames = 3) =>
+export const settle = (page: Page, frames = 3) =>
   page.evaluate(
     (n) =>
-      new Promise((done) => {
+      new Promise<void>((done) => {
         const step = () => (n-- > 0 ? requestAnimationFrame(step) : done());
         step();
       }),
     frames,
   );
 
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  bottom: number;
+}
+
 /* The app carries no test hooks; its controls are found the way a reader finds
    them — by the words on them, or by the label a screen reader would read. */
-export const rectOfText = (page, text) =>
-  page.evaluate((t) => {
+export const rectOfText = (page: Page, text: string): Promise<Rect | null> =>
+  page.evaluate((t): Rect | null => {
     const el = [...document.querySelectorAll("button")].find(
-      (b) => b.textContent.trim() === t,
+      (b) => b.textContent!.trim() === t,
     );
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -88,8 +100,8 @@ export const rectOfText = (page, text) =>
     };
   }, text);
 
-export const rectOf = (page, selector) =>
-  page.evaluate((s) => {
+export const rectOf = (page: Page, selector: string): Promise<Rect | null> =>
+  page.evaluate((s): Rect | null => {
     const el = document.querySelector(s);
     if (!el) return null;
     const r = el.getBoundingClientRect();

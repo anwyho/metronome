@@ -21,7 +21,6 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "htm": "^3.1.1",
     "preact": "^10.29.8",
     "prettier": "^3.6.2",
     "puppeteer": "^24.15.0",

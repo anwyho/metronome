@@ -16,7 +16,22 @@ const MAX_GRID = 2 * 56 + GAP;
 const MIN_GRID = 36;
 const MAX_SPARE = 268;
 
-export function gridMetrics(vw, vh, beatCount) {
+export interface GridMetrics {
+  wide: boolean;
+  rows: number;
+  cols: number;
+  cell: number;
+  height: number;
+  gap: number;
+  width: number;
+  ring: number;
+}
+
+export function gridMetrics(
+  vw: number,
+  vh: number,
+  beatCount: number,
+): GridMetrics {
   const wide = vw >= WIDE;
   const count = beatCount || 1;
 

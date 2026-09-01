@@ -1,13 +1,19 @@
-import { html } from "../html.js";
+import { h } from "../../vendor/preact.module.js";
 
-export function ShareButton({ copied, onShare }) {
-  return html`
+export function ShareButton({
+  copied,
+  onShare,
+}: {
+  copied: boolean;
+  onShare: () => void;
+}) {
+  return (
     <button
       class="share"
-      data-copied=${copied ? "" : null}
+      data-copied={copied ? "" : null}
       aria-label="Share this pattern"
-      title=${copied ? "Copied" : "Share link"}
-      onClick=${onShare}
+      title={copied ? "Copied" : "Share link"}
+      onClick={onShare}
     >
       <svg
         width="19"
@@ -25,5 +31,5 @@ export function ShareButton({ copied, onShare }) {
         <line x1="12" y1="2" x2="12" y2="14"></line>
       </svg>
     </button>
-  `;
+  );
 }

@@ -2,15 +2,18 @@ import { strict as assert } from "node:assert";
 import { after, before, describe, it } from "node:test";
 import { harness, rectOf, rectOfText, settle } from "../helpers/app.js";
 
+type Harness = Awaited<ReturnType<typeof harness>>;
+type TestPage = Awaited<ReturnType<Harness["page"]>>;
+
 /* 629 is a mini with both Safari toolbars showing, and is the height that
    breaks; the rest are the common iPhone viewports. */
 const HEIGHTS = [629, 667, 745, 812];
 const WIDTH = 390;
 
-const pattern = (n) => "X" + "o".repeat(n - 1);
+const pattern = (n: number) => "X" + "o".repeat(n - 1);
 
 describe("layout", () => {
-  let h;
+  let h: Harness;
   before(async () => {
     h = await harness();
   });
@@ -25,7 +28,7 @@ describe("layout", () => {
     return page;
   }
 
-  async function setBeats(page, n) {
+  async function setBeats(page: TestPage, n: number) {
     await page.evaluate((p) => {
       location.hash = "bpm=100&beats=" + p + "&sub=1";
     }, pattern(n));
@@ -72,6 +75,7 @@ describe("layout", () => {
         const chevron = await rectOf(page, '[aria-label="More settings"]');
         const start = await rectOfText(page, "Start");
         assert.ok(chevron, "the panel chevron is on the page");
+        assert.ok(start, "the transport is on the page");
         assert.ok(
           chevron.bottom <= height,
           `${n} beats pushed the chevron to ${chevron.bottom}, past ${height}`,
@@ -94,9 +98,9 @@ describe("layout", () => {
     await settle(page, 4);
 
     const side = await page.evaluate(() => {
-      const main = document.querySelector(".main").getBoundingClientRect();
-      const panel = document.querySelector(".panel").getBoundingClientRect();
-      const chevron = document.querySelector(".chevron");
+      const main = document.querySelector(".main")!.getBoundingClientRect();
+      const panel = document.querySelector(".panel")!.getBoundingClientRect();
+      const chevron = document.querySelector(".chevron")!;
       return {
         beside: panel.left >= main.right,
         /* Nothing below to scroll to, so the affordance that scrolls there has
@@ -117,8 +121,8 @@ describe("layout", () => {
         );
         while (panel && !panel.querySelector?.('input[aria-label="Volume"]'))
           panel = panel.parentElement;
-        const top = panel.getBoundingClientRect().top;
-        return [...panel.children].map((c) => {
+        const top = panel!.getBoundingClientRect().top;
+        return [...panel!.children].map((c) => {
           const r = c.getBoundingClientRect();
           return {
             offset: +(r.top - top).toFixed(2),
@@ -127,7 +131,7 @@ describe("layout", () => {
         });
       });
 
-    const setSub = async (n) => {
+    const setSub = async (n: number) => {
       await page.evaluate((n) => {
         location.hash = "bpm=100&beats=Xooo&sub=" + n;
       }, n);

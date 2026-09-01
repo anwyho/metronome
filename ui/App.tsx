@@ -1,5 +1,6 @@
+import { h } from "../vendor/preact.module.js";
 import { useRef } from "../vendor/hooks.module.js";
-import { html } from "./html.js";
+import type { Store } from "../metronome/store.js";
 import { BeatGrid } from "./components/BeatGrid.js";
 import { SettingsPanel } from "./components/SettingsPanel.js";
 import { TempoControl } from "./components/TempoControl.js";
@@ -11,17 +12,17 @@ import { currentBeat } from "../metronome/store.js";
 
 /* Sections take the whole `actions` bag because they drive several of them;
    the single-control components below them take one `onChange`. */
-export function App({ store }) {
+export function App({ store }: { store: Store }) {
   const state = useStore(store);
-  const shell = useRef(null);
+  const shell = useRef<HTMLDivElement>(null);
   const { vw, vh } = useViewport(shell);
 
   if (state.unsupported) {
-    return html`
+    return (
       <div class="unsupported">
         This metronome needs AudioWorklet, which this browser doesn’t support.
       </div>
-    `;
+    );
   }
 
   const metrics = gridMetrics(vw, vh, state.beats.length);
@@ -30,32 +31,32 @@ export function App({ store }) {
   const toPanel = () =>
     shell.current?.scrollTo({ top: shell.current.scrollHeight });
 
-  return html`
-    <div class="shell" ref=${shell}>
+  return (
+    <div class="shell" ref={shell}>
       <div class="main">
-        <${BeatGrid}
-          beats=${state.beats}
-          current=${currentBeat(state)}
-          metrics=${metrics}
-          actions=${store.actions}
+        <BeatGrid
+          beats={state.beats}
+          current={currentBeat(state)}
+          metrics={metrics}
+          actions={store.actions}
         />
-        <${TempoControl}
-          bpm=${state.bpm}
-          bpmText=${state.bpmText}
-          actions=${store.actions}
+        <TempoControl
+          bpm={state.bpm}
+          bpmText={state.bpmText}
+          actions={store.actions}
         />
-        <${Transport}
-          running=${state.running}
-          elapsed=${state.elapsed}
-          bars=${state.bars}
-          countIn=${state.countIn}
-          actions=${store.actions}
+        <Transport
+          running={state.running}
+          elapsed={state.elapsed}
+          bars={state.bars}
+          countIn={state.countIn}
+          actions={store.actions}
         />
-        <button class="chevron" aria-label="More settings" onClick=${toPanel}>
+        <button class="chevron" aria-label="More settings" onClick={toPanel}>
           ⌄
         </button>
       </div>
-      <${SettingsPanel} state=${state} actions=${store.actions} />
+      <SettingsPanel state={state} actions={store.actions} />
     </div>
-  `;
+  );
 }

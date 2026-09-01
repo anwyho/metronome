@@ -38,7 +38,7 @@ describe("hold repeat", () => {
   });
 
   it("accelerates, and then holds the ceiling", () => {
-    const over = (a, b) => stepsAfter(b) - stepsAfter(a);
+    const over = (a: number, b: number) => stepsAfter(b) - stepsAfter(a);
     const early = over(HOLD_DELAY, HOLD_DELAY + 1);
     const later = over(HOLD_DELAY + 2, HOLD_DELAY + 3);
     assert.ok(later > early * 2, `${later} should far outpace ${early}`);
@@ -66,7 +66,7 @@ describe("hold repeat", () => {
        rather than in one frame. */
     const crossed = [...Array(120).keys()]
       .map((i) => HOLD_DELAY + i / 10)
-      .find((t) => stepsAfter(t, SLOW) >= 22);
+      .find((t) => stepsAfter(t, SLOW) >= 22)!;
     assert.ok(
       crossed - HOLD_DELAY > 2,
       `crossed in ${(crossed - HOLD_DELAY).toFixed(1)}s`,
