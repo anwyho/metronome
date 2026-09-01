@@ -14,7 +14,10 @@ const sha = (s) =>
 const boot = readFileSync(join(DIST, "pwa/theme-boot.js"), "utf8").trim();
 let html = readFileSync(join(DIST, "index.html"), "utf8");
 
-html = html.replace(/<script data-theme-boot><\/script>/, `<script>${boot}</script>`);
+html = html.replace(
+  /<script data-theme-boot><\/script>/,
+  `<script>${boot}</script>`,
+);
 if (!html.includes(boot)) {
   console.error("the theme-boot placeholder was not found in index.html");
   process.exit(1);
@@ -28,7 +31,9 @@ writeFileSync(join(DIST, "index.html"), html);
    opening tag. */
 const withoutComments = html.replace(/<!--[\s\S]*?-->/g, "");
 const inlines = [
-  ...withoutComments.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g),
+  ...withoutComments.matchAll(
+    /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g,
+  ),
 ].map((m) => m[1] ?? "");
 const hashes = inlines.map(sha).join(" ");
 
@@ -49,4 +54,6 @@ const policy = [
 
 const headers = readFileSync(resolve(DIST, "..", "_headers"), "utf8");
 writeFileSync(join(DIST, "_headers"), headers.replace("@CSP@", policy));
-console.log(`inlined the theme boot and hashed ${inlines.length} inline scripts`);
+console.log(
+  `inlined the theme boot and hashed ${inlines.length} inline scripts`,
+);

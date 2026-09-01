@@ -51,7 +51,7 @@ CSP; `pwa/AGENTS.md`; CI.
   `checkJs` tsconfig instead. `tools/serve.mjs` **does** become `tools/serve.ts` and
   compiles into `dist/tools/serve.js` — see Task 1 for why the compiled tests need it
   there.
-- **Node 22.18+** (repo is on v22.22.3). Verified: Node's type-stripping does *not*
+- **Node 22.18+** (repo is on v22.22.3). Verified: Node's type-stripping does _not_
   resolve a `./foo.js` specifier to `foo.ts`, so tests cannot run on `.ts` sources
   directly. Tests compile into `dist/tests/` and run from there.
 - **Prettier stays the formatter.** Add `.ts`/`.tsx` to its scope; `dist/` to
@@ -63,25 +63,25 @@ CSP; `pwa/AGENTS.md`; CI.
 
 ### New files
 
-| Path | Responsibility |
-| --- | --- |
-| `tsconfig.base.json` | Shared compiler options. Extended by all others; compiles nothing itself. |
-| `tsconfig.json` | The app program: `metronome/`, `ui/`, `pwa/` module files, `tests/`, `tools/serve.ts`. Emits to `dist/`. |
-| `tsconfig.worker.json` | `sw.ts` + `pwa/sw-runtime.ts` under `lib: WebWorker`. Emits to `dist/`. |
-| `tsconfig.classic.json` | `pwa/register.ts` + `pwa/theme-boot.ts`, emitted as classic scripts. Emits to `dist/`. |
-| `tsconfig.tools.json` | `allowJs`+`checkJs`+`noEmit` over `tools/*.mjs`. Checks only. |
-| `types/worker.d.ts` | `declare function offlineWorker(config: OfflineWorkerConfig): void` and the config type, for the worker program. |
-| `types/globals.d.ts` | `Window.__theme`, `Window.__swInfo`, `Window.__applyUpdate`, `navigator.audioSession`, `navigator.wakeLock` — the browser APIs the DOM lib lacks or gets wrong. |
-| `metronome/worklet-processor.ts` | The audio processor as real, type-checked TypeScript. Was an unchecked template literal. |
-| `tools/inline.mjs` | Injects the compiled theme boot into `dist/index.html`, then computes the CSP hashes and writes `dist/_headers`. |
-| `pwa/AGENTS.md` | The template guide for agents reusing the shell. |
-| `.github/workflows/ci.yml` | typecheck, format, unit, browser, build. |
+| Path                             | Responsibility                                                                                                                                                  |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tsconfig.base.json`             | Shared compiler options. Extended by all others; compiles nothing itself.                                                                                       |
+| `tsconfig.json`                  | The app program: `metronome/`, `ui/`, `pwa/` module files, `tests/`, `tools/serve.ts`. Emits to `dist/`.                                                        |
+| `tsconfig.worker.json`           | `sw.ts` + `pwa/sw-runtime.ts` under `lib: WebWorker`. Emits to `dist/`.                                                                                         |
+| `tsconfig.classic.json`          | `pwa/register.ts` + `pwa/theme-boot.ts`, emitted as classic scripts. Emits to `dist/`.                                                                          |
+| `tsconfig.tools.json`            | `allowJs`+`checkJs`+`noEmit` over `tools/*.mjs`. Checks only.                                                                                                   |
+| `types/worker.d.ts`              | `declare function offlineWorker(config: OfflineWorkerConfig): void` and the config type, for the worker program.                                                |
+| `types/globals.d.ts`             | `Window.__theme`, `Window.__swInfo`, `Window.__applyUpdate`, `navigator.audioSession`, `navigator.wakeLock` — the browser APIs the DOM lib lacks or gets wrong. |
+| `metronome/worklet-processor.ts` | The audio processor as real, type-checked TypeScript. Was an unchecked template literal.                                                                        |
+| `tools/inline.mjs`               | Injects the compiled theme boot into `dist/index.html`, then computes the CSP hashes and writes `dist/_headers`.                                                |
+| `pwa/AGENTS.md`                  | The template guide for agents reusing the shell.                                                                                                                |
+| `.github/workflows/ci.yml`       | typecheck, format, unit, browser, build.                                                                                                                        |
 
 ### Deleted files
 
-| Path | Why |
-| --- | --- |
-| `ui/html.js` | `htm` binding. Replaced by `.tsx`. |
+| Path                   | Why                                                   |
+| ---------------------- | ----------------------------------------------------- |
+| `ui/html.js`           | `htm` binding. Replaced by `.tsx`.                    |
 | `vendor/htm.module.js` | `htm` is dropped; JSX compiles at build time instead. |
 
 ### Converted in place (`.js` → `.ts`, or `.js` → `.tsx`)
@@ -126,12 +126,14 @@ the de-risking task: if `dist/` breaks the service worker, we find out now, with
 one-line `git checkout` as the escape hatch.
 
 **Files:**
+
 - Create: `tsconfig.base.json`, `tsconfig.json`, `tools/copy-static.mjs`
 - Modify: `package.json` (scripts, devDependency), `.gitignore`, `.prettierignore`,
   `tools/build.mjs`, `tools/build-site.sh`, `tools/serve.mjs` → `tools/serve.ts`
 - Test: existing `tests/**` must pass unchanged in behavior
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `dist/` as the built app tree; `npm run build` as the command that fills
   it; `dist/tools/serve.js` exporting `startServer(options)` with today's signature.
@@ -180,8 +182,21 @@ tree untouched. Task 3 flips `checkJs` on as files convert.
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": []
   },
-  "include": ["metronome/**/*", "ui/**/*", "pwa/**/*", "tests/**/*", "tools/serve.ts", "types/**/*"],
-  "exclude": ["pwa/sw-runtime.ts", "pwa/register.ts", "pwa/theme-boot.ts", "sw.ts", "dist"]
+  "include": [
+    "metronome/**/*",
+    "ui/**/*",
+    "pwa/**/*",
+    "tests/**/*",
+    "tools/serve.ts",
+    "types/**/*"
+  ],
+  "exclude": [
+    "pwa/sw-runtime.ts",
+    "pwa/register.ts",
+    "pwa/theme-boot.ts",
+    "sw.ts",
+    "dist"
+  ]
 }
 ```
 
@@ -233,7 +248,9 @@ const DIRS = ["styles", "vendor", "fonts", "icons"];
 mkdirSync(DIST, { recursive: true });
 for (const f of FILES) cpSync(join(ROOT, f), join(DIST, f));
 for (const d of DIRS) cpSync(join(ROOT, d), join(DIST, d), { recursive: true });
-console.log(`copied ${FILES.length} files and ${DIRS.length} directories into dist/`);
+console.log(
+  `copied ${FILES.length} files and ${DIRS.length} directories into dist/`,
+);
 ```
 
 - [ ] **Step 6: Point `build.mjs` at `dist/`**
@@ -256,7 +273,9 @@ out of the precache; sourcemaps ship but are not worth caching:
 
 ```js
 const SOURCES = (f) =>
-  f.endsWith(".svg") || f.endsWith(".md") || f.endsWith(".map") ||
+  f.endsWith(".svg") ||
+  f.endsWith(".md") ||
+  f.endsWith(".map") ||
   f === "pwa/theme-boot.js";
 ```
 
@@ -288,7 +307,7 @@ Append `dist/` to `.gitignore` and to `.prettierignore`.
 
 - [ ] **Step 9: Point `build-site.sh` at `dist/`**
 
-Replace the copy block. The hand-written copy list disappears — `dist/` *is* the
+Replace the copy block. The hand-written copy list disappears — `dist/` _is_ the
 shipped tree, which removes the class of bug the existing cross-check guards against.
 Keep the cross-check anyway; it costs nothing and now verifies the copy, not a list.
 
@@ -335,10 +354,12 @@ Six specs need only Node; four need Chrome. Today one command runs all ten and c
 48 seconds plus a Chrome download.
 
 **Files:**
+
 - Modify: `package.json`
 - Test: both new lanes
 
 **Interfaces:**
+
 - Consumes: `dist/tests/**` from Task 1.
 - Produces: `npm run test:unit` and `npm run test:browser`.
 
@@ -347,10 +368,10 @@ Six specs need only Node; four need Chrome. Today one command runs all ten and c
 Verified in review: `worklet.test.js` drives the processor through `node:vm`, not a
 browser. The lanes are:
 
-| Lane | Specs |
-| --- | --- |
-| unit | `hold-repeat`, `pattern`, `share`, `tempo`, `timing`, `worklet` |
-| browser | `app`, `layout`, `service-worker`, `vendor` |
+| Lane    | Specs                                                           |
+| ------- | --------------------------------------------------------------- |
+| unit    | `hold-repeat`, `pattern`, `share`, `tempo`, `timing`, `worklet` |
+| browser | `app`, `layout`, `service-worker`, `vendor`                     |
 
 Re-derive rather than trusting this list, since a spec may have moved:
 
@@ -418,12 +439,14 @@ correctness requirements in the repo. Convert bottom-up so each file's dependenc
 are already typed.
 
 **Files:**
+
 - Create: `types/globals.d.ts`
 - Modify → `.ts`: `metronome/{swing,tempo,pattern,share,timing,prefs,engine,store}.ts`
 - Modify: `tsconfig.base.json` (`checkJs: true`)
 - Test: `dist/tests/{tempo,share,timing,pattern}.test.js`
 
 **Interfaces:**
+
 - Consumes: `dist/` pipeline from Task 1.
 - Produces: the domain types every later task imports —
 
@@ -432,8 +455,16 @@ export type Level = "accent" | "normal" | "minor" | "off";
 export type Pattern = Level[];
 export type ThemePref = "system" | "light" | "dark";
 export type Resolved = "light" | "dark";
-export interface Anchor { tick: number; time: number; }
-export interface ShareState { bpm: number; beats: Pattern; sub: number; swing: number; }
+export interface Anchor {
+  tick: number;
+  time: number;
+}
+export interface ShareState {
+  bpm: number;
+  beats: Pattern;
+  sub: number;
+  swing: number;
+}
 ```
 
 - [ ] **Step 1: Write `types/globals.d.ts`**
@@ -444,8 +475,12 @@ The DOM lib is missing `audioSession` and the app's three `window` globals.
 export {};
 
 declare global {
-  interface AudioSession { type: "playback" | "ambient" | "transient" | "transient-solo"; }
-  interface Navigator { readonly audioSession?: AudioSession; }
+  interface AudioSession {
+    type: "playback" | "ambient" | "transient" | "transient-solo";
+  }
+  interface Navigator {
+    readonly audioSession?: AudioSession;
+  }
 
   interface ThemeApi {
     pref: import("../metronome/prefs.js").ThemePref;
@@ -454,7 +489,11 @@ declare global {
     set(p: string): void;
     cycle(): void;
   }
-  interface SwInfo { version: string | null; build?: string; update: boolean; }
+  interface SwInfo {
+    version: string | null;
+    build?: string;
+    update: boolean;
+  }
 
   interface Window {
     __theme: ThemeApi;
@@ -604,11 +643,13 @@ task makes it a real module, compiled and checked, then inlined as a string at b
 time so `addModule()` still gets a Blob and nothing about the audio path changes.
 
 **Files:**
+
 - Create: `metronome/worklet-processor.ts`, `types/worklet.d.ts`
 - Modify: `metronome/worklet.ts` (becomes generated), `tools/build.mjs`
 - Test: `dist/tests/worklet.test.js`
 
 **Interfaces:**
+
 - Consumes: `Level`, `Pattern` from Task 3.
 - Produces: `WORKLET_SRC: string`, unchanged in shape and content.
 
@@ -630,7 +671,10 @@ declare global {
       parameters: Record<string, Float32Array>,
     ): boolean;
   }
-  function registerProcessor(name: string, ctor: typeof AudioWorkletProcessor): void;
+  function registerProcessor(
+    name: string,
+    ctor: typeof AudioWorkletProcessor,
+  ): void;
   const currentTime: number;
   const sampleRate: number;
 }
@@ -687,8 +731,10 @@ compile, write the string module:
 /* The processor runs in the audio thread, compiled from a Blob rather than fetched,
    so the click never waits on a request. It is authored as a real module and
    type-checked; this inlines the compiled output as the string addModule() needs. */
-const processor = readFileSync(join(ROOT, "metronome/worklet-processor.js"), "utf8")
-  .replace(/^export\s*\{\s*\};?$/m, "");
+const processor = readFileSync(
+  join(ROOT, "metronome/worklet-processor.js"),
+  "utf8",
+).replace(/^export\s*\{\s*\};?$/m, "");
 writeFileSync(
   join(ROOT, "metronome/worklet.js"),
   `export const WORKLET_SRC = ${JSON.stringify(processor)};\n`,
@@ -731,12 +777,14 @@ worker. Each needs its own compiler configuration, and getting one wrong breaks 
 offline guarantee silently.
 
 **Files:**
+
 - Create: `tsconfig.worker.json`, `tsconfig.classic.json`, `types/worker.d.ts`
 - Modify → `.ts`: `pwa/{install,theme,updates,register,theme-boot,sw-runtime}.ts`, `sw.ts`
 - Modify: `package.json` (build script), `tsconfig.json` (excludes)
 - Test: `dist/tests/browser/service-worker.test.js`
 
 **Interfaces:**
+
 - Consumes: `ThemePref`, `Resolved` from Task 3.
 - Produces: `offlineWorker(config)` as a typed global; `pwa/updates.ts` exporting
   `swInfo()` and `applyUpdate()`; `pwa/theme.ts` exporting the theme read.
@@ -755,7 +803,9 @@ declare global {
     shell?: string;
   }
   function offlineWorker(config: OfflineWorkerConfig): void;
-  interface ServiceWorkerGlobalScope { offlineWorker: typeof offlineWorker; }
+  interface ServiceWorkerGlobalScope {
+    offlineWorker: typeof offlineWorker;
+  }
 }
 ```
 
@@ -844,7 +894,12 @@ const PRECACHE: string[] = [];
 
 importScripts("pwa/sw-runtime.js");
 
-offlineWorker({ version: VERSION, build: BUILD, precache: PRECACHE, cachePrefix: "metronome-" });
+offlineWorker({
+  version: VERSION,
+  build: BUILD,
+  precache: PRECACHE,
+  cachePrefix: "metronome-",
+});
 ```
 
 `build.mjs`'s regex must still match the emitted JS. tsc strips the `: string[]`
@@ -896,6 +951,7 @@ The largest type-safety win. `htm` templates are opaque strings to the checker;
 review: a wrong prop type errors with `TS2322`.
 
 **Files:**
+
 - Create: `vendor/jsx-runtime.module.js` (vendored), import map in `index.html`
 - Delete: `ui/html.js`, `vendor/htm.module.js`
 - Modify → `.tsx`: `ui/App.tsx`, `ui/main.tsx`, all 13 of `ui/components/*.tsx`
@@ -903,6 +959,7 @@ review: a wrong prop type errors with `TS2322`.
 - Modify: `tools/vendor.mjs`, `tsconfig.json`, `tests/browser/vendor.test.ts`
 
 **Interfaces:**
+
 - Consumes: `State`, `Store`, `Actions`, `Level`, `Pattern` from Task 3.
 - Produces: typed components; `ui/main.tsx` as the entry `index.html` loads.
 
@@ -926,7 +983,10 @@ alongside the existing three, and drop `htm`:
 const MODULES = [
   ["preact/dist/preact.module.js", "vendor/preact.module.js"],
   ["preact/hooks/dist/hooks.module.js", "vendor/hooks.module.js"],
-  ["preact/jsx-runtime/dist/jsxRuntime.module.js", "vendor/jsx-runtime.module.js"],
+  [
+    "preact/jsx-runtime/dist/jsxRuntime.module.js",
+    "vendor/jsx-runtime.module.js",
+  ],
 ];
 ```
 
@@ -987,9 +1047,19 @@ git mv ui/components/CountInButton.js ui/components/CountInButton.tsx
 ```
 
 ```tsx
-export function CountInButton({ count, onCycle }: { count: number; onCycle: () => void }) {
+export function CountInButton({
+  count,
+  onCycle,
+}: {
+  count: number;
+  onCycle: () => void;
+}) {
   return (
-    <button class="count-in" aria-pressed={count ? "true" : "false"} onClick={onCycle}>
+    <button
+      class="count-in"
+      aria-pressed={count ? "true" : "false"}
+      onClick={onCycle}
+    >
       {count ? `${count}` : "Count-in"}
     </button>
   );
@@ -1017,14 +1087,14 @@ git mv ui/main.js ui/main.tsx
 
 The mechanical translation from htm to JSX:
 
-| htm | JSX |
-| --- | --- |
-| `` html`<div class="x">` `` | `<div class="x">` |
-| `${value}` | `{value}` |
-| `<${Component} />` | `<Component />` |
-| `<//>` | `</Component>` |
-| `...${props}` | `{...props}` |
-| `style=${{ "--at": v }}` | `style={{ "--at": v }}` |
+| htm                         | JSX                     |
+| --------------------------- | ----------------------- |
+| `` html`<div class="x">` `` | `<div class="x">`       |
+| `${value}`                  | `{value}`               |
+| `<${Component} />`          | `<Component />`         |
+| `<//>`                      | `</Component>`          |
+| `...${props}`               | `{...props}`            |
+| `style=${{ "--at": v }}`    | `style={{ "--at": v }}` |
 
 Keep `class`, not `className` — Preact accepts `class`, and changing it would churn
 every file for nothing.
@@ -1069,16 +1139,18 @@ git commit -m "Move the UI to TSX, so props and markup are checked"
 
 ## Task 7: Inline the theme boot, and ship a CSP
 
-Injection replaces the drift check: the inline snippet is *generated* from the
+Injection replaces the drift check: the inline snippet is _generated_ from the
 compiled boot script, so the two cannot disagree. The same pass hashes the two inline
 scripts and writes the policy that allows exactly them.
 
 **Files:**
+
 - Create: `tools/inline.mjs`
 - Modify: `index.html`, `_headers`, `tools/serve.ts`, `package.json`
 - Test: `dist/tests/browser/app.test.js`, a new CSP assertion
 
 **Interfaces:**
+
 - Consumes: `dist/pwa/theme-boot.js` from Task 5, the import map from Task 6.
 - Produces: `dist/index.html` with the boot inlined; `dist/_headers` with the policy.
 
@@ -1105,12 +1177,16 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DIST = resolve(dirname(fileURLToPath(import.meta.url)), "..", "dist");
-const sha = (s) => "'sha256-" + createHash("sha256").update(s, "utf8").digest("base64") + "'";
+const sha = (s) =>
+  "'sha256-" + createHash("sha256").update(s, "utf8").digest("base64") + "'";
 
 const boot = readFileSync(join(DIST, "pwa/theme-boot.js"), "utf8").trim();
 let html = readFileSync(join(DIST, "index.html"), "utf8");
 
-html = html.replace(/<script data-theme-boot><\/script>/, `<script>${boot}</script>`);
+html = html.replace(
+  /<script data-theme-boot><\/script>/,
+  `<script>${boot}</script>`,
+);
 if (!html.includes(boot)) {
   console.error("the theme-boot placeholder was not found in index.html");
   process.exit(1);
@@ -1119,8 +1195,9 @@ writeFileSync(join(DIST, "index.html"), html);
 
 /* Every inline <script> in the shell, hashed. An inline script the policy does
    not name is silently blocked, and the app fails to theme or fails to boot. */
-const inlines = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)]
-  .map((m) => m[1]);
+const inlines = [
+  ...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g),
+].map((m) => m[1]);
 const hashes = inlines.map(sha).join(" ");
 
 const policy = [
@@ -1139,11 +1216,10 @@ const policy = [
 ].join("; ");
 
 const headers = readFileSync(resolve(DIST, "..", "_headers"), "utf8");
-writeFileSync(
-  join(DIST, "_headers"),
-  headers.replace("@CSP@", policy),
+writeFileSync(join(DIST, "_headers"), headers.replace("@CSP@", policy));
+console.log(
+  `inlined the theme boot and hashed ${inlines.length} inline scripts`,
 );
-console.log(`inlined the theme boot and hashed ${inlines.length} inline scripts`);
 ```
 
 - [ ] **Step 3: Add the policy block to `_headers`**
@@ -1215,7 +1291,9 @@ it("boots with the deployed CSP in force, and blocks nothing", async () => {
   });
   await open();
   assert.deepEqual(violations, []);
-  const theme = await page.evaluate(() => document.documentElement.dataset.theme);
+  const theme = await page.evaluate(
+    () => document.documentElement.dataset.theme,
+  );
   assert.ok(theme === "light" || theme === "dark", "theme boot ran under CSP");
 });
 ```
@@ -1251,10 +1329,12 @@ Nothing currently runs the suite. The deploy runs a build check and would ship a
 red suite.
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 - Modify: `tsconfig.tools.json` (create, if Task 5 deferred it)
 
 **Interfaces:**
+
 - Consumes: `npm run check`, `format:check`, `test:unit`, `test:browser`, `build`.
 - Produces: a required status on `anwyho/metronome`.
 
@@ -1363,10 +1443,12 @@ lifting a TypeScript toolchain too. An agent given "add offline support using th
 shell" needs the constraints that are invisible in the code.
 
 **Files:**
+
 - Create: `pwa/AGENTS.md`
 - Modify: `README.md`, `pwa/README.md`
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: documentation matching the shipped state.
 
@@ -1453,12 +1535,12 @@ git commit -m "Document the shell as a template, and drop the no-build claims"
 
 **Spec coverage.** TypeScript conversion — Tasks 3–6 cover `metronome/`, the worklet,
 `pwa/`, `ui/`, tests and `serve`; Task 1 and Task 8 cover the two deliberate `.mjs`
-exceptions with `checkJs`. Test split — Task 2. CSP — Task 7. `pwa/AGENTS.md` — Task
-9. CI — Task 8. No behavior change — guarded by keeping all 69 tests green at every
+exceptions with `checkJs`. Test split — Task 2. CSP — Task 7. `pwa/AGENTS.md` — Task 9. CI — Task 8. No behavior change — guarded by keeping all 69 tests green at every
 task boundary, plus the constant-diff in Task 4 Step 2 and the emit-shape check in
 Task 5 Step 8. Offline guarantees — Task 5 Step 9 and Task 9 Step 1.
 
 **Known risks, and where they surface.**
+
 1. `checkJs: true` in Task 3 Step 2 turns on checking for files that convert several
    tasks later, so the error count spikes and stays high until Task 6. `noEmitOnError`
    is deliberately not set so the build stays runnable throughout. If this proves
@@ -1471,6 +1553,7 @@ Task 5 Step 8. Offline guarantees — Task 5 Step 9 and Task 9 Step 1.
    worklet spec asserts on the exact click sequence, which is why it is the gate.
 
 **Open decisions carried into execution.**
+
 - TypeScript resolves to v7 (native port) as of writing. If its JSX or `module: None`
   behavior differs from v5, pin `typescript@5` — nothing in this plan depends on a v7
   feature.
