@@ -19,12 +19,14 @@ no audio files to load.
 ## Reusing the shell
 
 Copy `pwa/`, `sw.ts`, `tools/build.mjs`, `tools/inline.mjs`,
-`tools/copy-static.mjs`, `tools/check-scripts.mjs`, the tsconfigs, and the head
-of `index.html` into another project. **[`pwa/README.md`](pwa/README.md)** is
-the guide: what each file does, how they are wired up, and what each guarantee
-costs. **[`pwa/AGENTS.md`](pwa/AGENTS.md)** is the constraint list — the
-handful of things that look like details and are not, each with a failure mode
-that is silent.
+`tools/copy-static.mjs`, `tools/check-scripts.mjs`, the tsconfigs (including
+`tsconfig.tools.json`), `types/worker.d.ts` and the shell-owned globals in
+`types/globals.d.ts`, a `_headers` file carrying an `@CSP@` placeholder, and
+the head of `index.html` into another project. **[`pwa/README.md`](pwa/README.md)**
+is the guide: what each file does, how they are wired up, and what each
+guarantee costs. **[`pwa/AGENTS.md`](pwa/AGENTS.md)** has the exact copy list
+plus the constraint list — the handful of things that look like details and
+are not, each with a failure mode that is silent.
 
 ## Run it
 
@@ -46,7 +48,9 @@ The build compiles three programs, then walks the output:
 tsc -p tsconfig.json           the app: metronome/, ui/, pwa/ modules, tests/, tools/serve
 tsc -p tsconfig.worker.json    sw.ts + pwa/sw-runtime.ts (lib: WebWorker)
 tsc -p tsconfig.classic.json   pwa/register.ts + pwa/theme-boot.ts (classic scripts)
-tools/check-scripts.mjs        asserts those three outputs stayed free of module syntax
+tools/check-scripts.mjs        asserts the worker and classic programs' emitted files —
+                                pwa/register.js, pwa/theme-boot.js, pwa/sw-runtime.js,
+                                sw.js — stayed free of module syntax
 tools/copy-static.mjs          copies the files tsc doesn't emit
 tools/inline.mjs               injects the compiled theme boot into dist/index.html,
                                 hashes every inline script for the CSP

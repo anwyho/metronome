@@ -8,10 +8,21 @@ build shapes the output, not just from what the source files say.
 
 `pwa/`, `sw.ts`, `tools/build.mjs`, `tools/inline.mjs`, `tools/copy-static.mjs`,
 `tools/check-scripts.mjs`, `tsconfig.base.json`, `tsconfig.json`,
-`tsconfig.worker.json`, `tsconfig.classic.json`, and the head of `index.html`
-(the `<script data-theme-boot>` placeholder and the two `<script>` tags below
-the stylesheets). `pwa/README.md` explains what each file does; this file is
-the rules an agent gets wrong.
+`tsconfig.worker.json`, `tsconfig.classic.json`, `tsconfig.tools.json`,
+`types/worker.d.ts`, and the shell-owned declarations in `types/globals.d.ts`
+(`ThemeApi`, `SwInfo`, `Window.__theme`, `Window.__swInfo` — the rest of that
+file is this app's own globals, not the shell's). `sw.ts` and
+`pwa/sw-runtime.ts` type-check against `worker.d.ts`; `pwa/register.ts` and
+`pwa/theme-boot.ts` type-check against the shell-owned part of `globals.d.ts`.
+Without them, `tsconfig.worker.json` and `tsconfig.classic.json` don't compile.
+
+Also copy a `_headers` file carrying a literal `@CSP@` placeholder —
+`tools/inline.mjs` reads it from the project root and writes the policy in
+its place. Without one, the build crashes on that step.
+
+And the head of `index.html` (the `<script data-theme-boot>` placeholder and
+the two `<script>` tags below the stylesheets). `README.md` explains what
+each file does; this file is the rules an agent gets wrong.
 
 ## Rules that look like details and are not
 
@@ -32,20 +43,18 @@ the rules an agent gets wrong.
   UI uses the classic JSX runtime (`jsxFactory: "h"`) with a per-file relative
   import for the same reason. This is an iOS home-screen PWA; do not raise
   that floor.
-- **The shell is precached as `'./'`, never `'index.html'`.** An origin that
-  redirects `/index.html` to the directory form resolves a fetch with the
-  redirect flag set, and a flagged response answering a navigation is rejected
-  outright. iOS reports "Response served by service worker has redirections"
-  and the app will not launch.
+- **The shell is precached as `'./'`, never `'index.html'`.** A redirected
+  `/index.html` is rejected outright when it answers a navigation, and the app
+  will not launch on iOS — see README.md's
+  ["What it guarantees, and what it costs"](README.md#what-it-guarantees-and-what-it-costs)
+  for why.
 - **`build.mjs` writes into `dist/sw.js`, not the source.** `sw.ts`'s generated
   block holds permanent placeholders; editing them does nothing.
-- **The precache is filled by hand, not `addAll`.** `addAll` stores whatever a
-  redirect resolved to. The install is all-or-nothing on purpose: a cache that
-  claims to be complete and is not strands the next cold launch with no way to
-  notice from inside the worker.
-- **Navigations are cache-first, never network-first.** A slow network hangs
-  rather than rejecting, so network-first-with-fallback stalls for exactly as
-  long as the network is bad.
+- **The precache is filled by hand, not `addAll`.** The install is
+  all-or-nothing, so a partial cache strands the next cold launch with no way
+  to notice from inside the worker — see the same section.
+- **Navigations are cache-first, never network-first.** A network-first
+  fallback stalls for as long as the network is bad — see the same section.
 - **`tools/inline.mjs` runs before `tools/build.mjs`.** Injection changes
   `index.html`'s bytes, and `BUILD` hashes them. Reversed, the worker caches a
   shell whose hash it does not have.
