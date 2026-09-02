@@ -4,7 +4,7 @@
    the directory form, and precaching that redirect is what broke iOS launches
    once already.
 
-   node tools/serve.mjs [port]   serve the working tree at /metronome/ */
+   node dist/tools/serve.js [port]   serve dist/ at /metronome/ */
 
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";

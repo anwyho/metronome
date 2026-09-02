@@ -4,8 +4,8 @@
    This file is the source of a snippet that has to be INLINE in the head — a
    <script src> would be a network round trip ahead of the paint on a cold
    load. `tools/inline.mjs` compiles this file and injects the result into
-   index.html's `<script data-theme-boot>` placeholder; it is never shipped as
-   its own file.
+   index.html's `<script data-theme-boot>` placeholder. The compiled file is
+   never precached and nothing references it; the inlined copy is what runs.
 
    `pref` is the choice of the three; `resolved` is the light or dark it
    currently means. The OS query lives here rather than in the stylesheet so
