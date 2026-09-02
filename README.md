@@ -60,7 +60,10 @@ tools/build.mjs                regenerates sw.js's precache list, VERSION and BU
 
 `npm run check` type-checks the same three programs with `--noEmit`, plus a
 fourth: `tsconfig.tools.json` runs `checkJs` over `tools/*.mjs` and emits
-nothing. It exists only for the check, not the build.
+nothing. It exists only for the check, not the build. It ends with
+`tools/vendor.mjs --check`, because `vendor/*.js` are the bytes that ship while
+the `.d.ts` beside them type-check against `node_modules` — a dependency bump
+that nobody re-vendors would leave the two describing different code.
 
 That buys strict type checking — including the audio processor and the UI
 markup — not bundling. Nothing is tree-shaken, so what is vendored is what
