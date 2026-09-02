@@ -55,7 +55,8 @@ tools/copy-static.mjs          copies the files tsc doesn't emit
 tools/inline.mjs               injects the compiled theme boot into dist/index.html,
                                 hashes every inline script for the CSP
 tools/build.mjs                regenerates sw.js's precache list, VERSION and BUILD
-                                from what actually landed in dist/
+                                from what actually landed in dist/, and records the
+                                pair in sw-version.json
 ```
 
 `npm run check` type-checks the same three programs with `--noEmit`, plus a
@@ -115,6 +116,8 @@ tools/              build.mjs, inline.mjs, copy-static.mjs, check-scripts.mjs,
                     vendor.mjs, serve.ts, build-site.sh
 tsconfig*.json      the three build programs, plus tools/*.mjs's checkJs-only pass
 _headers            cache headers; paths carry the /metronome prefix
+sw-version.json     the last (BUILD, VERSION) pair build.mjs stamped; committed, so a
+                    rebuild of unchanged source keeps the version it already shipped
 wrangler.jsonc      Workers Static Assets config + route
 docs/               the brief this restructure answered, and the plan
 ```

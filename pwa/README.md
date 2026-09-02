@@ -54,7 +54,10 @@ offlineWorker({
 
 `tools/build.mjs` writes that generated block into `dist/sw.js` by walking
 what actually landed in `dist/`, so the precache list cannot drift from the
-shipped files — see the root README for where that fits in the build.
+shipped files — see the root README for where that fits in the build. It keeps
+the `(BUILD, VERSION)` pair it last stamped in a committed `sw-version.json`,
+and reuses the VERSION while BUILD is unchanged, so a rebuild of unchanged
+source ships the same bytes and prompts nobody.
 
 ## What it guarantees, and what it costs
 

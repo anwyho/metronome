@@ -2,10 +2,7 @@
    actually on disk, so the list cannot drift from the shipped files. Drift only
    breaks a cold or slow launch, which is exactly the launch nobody tests by hand.
    Runs after tools/inline.mjs, so BUILD hashes the shell with the theme boot
-   already inlined rather than the placeholder.
-
-   node tools/build.mjs          rewrite sw.js
-   node tools/build.mjs --check  exit 1 if sw.js is stale */
+   already inlined rather than the placeholder. */
 
 import { createHash } from "node:crypto";
 import {
@@ -19,7 +16,9 @@ import {
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "dist");
+const HERE = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = join(HERE, "dist");
+const STAMP = join(HERE, "sw-version.json");
 const SKIP_DIRS = new Set(["tests", "tools"]);
 const SKIP_FILES = new Set([
   "sw.js",
@@ -59,8 +58,8 @@ const SOURCES = (f) =>
 /* The processor runs in the audio thread, compiled from a Blob rather than fetched,
    so the click never waits on a request. It is authored as a real module and
    type-checked; this inlines the compiled output as the string addModule() needs.
-   Guarded so a re-run (e.g. `node tools/build.mjs --check` without a preceding
-   compile) is a no-op rather than a crash on its own already-consumed input. */
+   Guarded so a second run over the same dist/ is a no-op rather than a crash on
+   its own already-consumed input. */
 const processorPath = join(ROOT, "metronome/worklet-processor.js");
 if (existsSync(processorPath)) {
   const processor = readFileSync(processorPath, "utf8")
@@ -106,24 +105,29 @@ const build = h.digest("hex").slice(0, 12);
 
 const swPath = join(ROOT, "sw.js");
 const sw = readFileSync(swPath, "utf8");
-const prevBuild = (sw.match(/const BUILD = "([^"]*)"/) || [])[1];
-const prevVersion = (sw.match(/const VERSION = "([^"]*)"/) || [])[1];
 
-/* The timestamp is what a human reads; BUILD is what actually keys the cache.
-   Stamped only when the content hash moves, so re-running the build with
-   nothing changed neither bumps the version nor trips --check. Local time,
-   because the person reading it is the person who ran the build. */
-function stampedVersion() {
-  if (build === prevBuild) return prevVersion;
+/* The timestamp is what a human reads; BUILD is what actually keys the cache,
+   and it moves only when a shipped byte does. The pair is committed rather than
+   read back out of dist/sw.js, which the build wipes and tsc re-emits with the
+   placeholder: with nothing to compare against, every rebuild of unchanged
+   source would stamp a fresh VERSION, and the byte difference would offer every
+   user an update for nothing. Local time, because the person reading it is the
+   person who ran the build. */
+const stamp = existsSync(STAMP)
+  ? JSON.parse(readFileSync(STAMP, "utf8"))
+  : null;
+let version;
+if (stamp && stamp.build === build) {
+  version = stamp.version;
+} else {
   const d = new Date();
   /** @param {number} n */
   const p2 = (n) => String(n).padStart(2, "0");
-  return (
+  version =
     `${p2(d.getFullYear() % 100)}${p2(d.getMonth() + 1)}${p2(d.getDate())}` +
-    `.${p2(d.getHours())}${p2(d.getMinutes())}`
-  );
+    `.${p2(d.getHours())}${p2(d.getMinutes())}`;
+  writeFileSync(STAMP, JSON.stringify({ build, version }, null, 2) + "\n");
 }
-const version = stampedVersion();
 
 /* Written the way Prettier would write it, so formatting the tree and
    regenerating this block do not fight over the same lines. */
@@ -140,18 +144,8 @@ const next = sw.replace(
   block,
 );
 
-if (process.argv.includes("--check")) {
-  if (next !== sw) {
-    console.error("sw.js is stale — run `node tools/build.mjs`");
-    process.exit(1);
-  }
-  console.log(
-    `sw.js up to date — version ${version}, build ${build}, ${precache.length} precached`,
-  );
-} else {
-  writeFileSync(swPath, next);
-  console.log(
-    `sw.js updated — version ${version}, build ${build}, ${precache.length} precached`,
-  );
-  for (const f of precache) console.log("  " + f);
-}
+writeFileSync(swPath, next);
+console.log(
+  `sw.js updated — version ${version}, build ${build}, ${precache.length} precached`,
+);
+for (const f of precache) console.log("  " + f);

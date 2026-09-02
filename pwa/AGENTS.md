@@ -50,6 +50,10 @@ each file does; this file is the rules an agent gets wrong.
   for why.
 - **`build.mjs` writes into `dist/sw.js`, not the source.** `sw.ts`'s generated
   block holds permanent placeholders; editing them does nothing.
+- **`sw-version.json` is committed, not ignored.** The build wipes `dist/`, so
+  it is the only surviving record of the last `(BUILD, VERSION)` pair. Ignore it
+  and every rebuild stamps a new VERSION, which changes `sw.js`'s bytes, which
+  offers every user an update for a deploy that changed nothing.
 - **The precache is filled by hand, not `addAll`.** The install is
   all-or-nothing, so a partial cache strands the next cold launch with no way
   to notice from inside the worker — see the same section.

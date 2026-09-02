@@ -1,8 +1,8 @@
 /* The worker for this app: configuration, and the runtime that reads it.
 
-   The block below is a placeholder: `tools/build.mjs` writes the real values
-   into the compiled `dist/sw.js`, not into this source. Run it after changing
-   any shipped file; `node tools/build.mjs --check` fails if that copy is stale.
+   The block below is a permanent placeholder. `npm run build` regenerates
+   `dist/sw.js` from scratch and `tools/build.mjs` writes the real values there,
+   never into this source, so editing them here does nothing.
 
    VERSION is the calendar date, for humans. BUILD hashes every precached byte
    and the precache list, and is what actually keys the cache: two deploys on
