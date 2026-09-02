@@ -236,8 +236,13 @@ describe("app", () => {
       () => document.querySelector(".cell__dot[data-live]") !== null,
       { timeout: 5000 },
     );
-    await page.waitForFunction(() =>
-      /bars/.test(document.querySelector(".counters")!.textContent!),
+    /* The count has to move, not merely appear: "0:00 · 0 bars" is exactly what
+       an engine that never loaded its worklet renders, and nothing about that
+       failure is logged. */
+    await page.waitForFunction(
+      () =>
+        /[1-9]\d* bars/.test(document.querySelector(".counters")!.textContent!),
+      { timeout: 5000 },
     );
     await pressText("Stop");
     assert.equal(await text(".start"), "Start");
@@ -380,7 +385,20 @@ describe("app", () => {
     page.on("console", (m) => {
       if (/Content Security Policy/i.test(m.text())) violations.push(m.text());
     });
-    await open();
+    await page.goto("about:blank");
+    const response = (await page.goto(h.server.url, {
+      waitUntil: "domcontentloaded",
+    }))!;
+    /* Read the header rather than only listening for violations: no policy at
+       all, an unsubstituted @CSP@ token and a refused worklet module each log
+       nothing, so silence alone says only that nothing spoke. */
+    const csp = response.headers()["content-security-policy"];
+    assert.ok(csp, "the shell is served with a policy");
+    assert.match(csp, /script-src [^;]*'sha256-/);
+    /* The worklet module is fetched from a Blob URL, under script-src. */
+    assert.match(csp, /script-src [^;]*\bblob:/);
+    await page.waitForFunction(() => /beats/.test(document.body.innerText));
+    await settle(page, 3);
     assert.deepEqual(violations, []);
     const theme = await page.evaluate(
       () => document.documentElement.dataset.theme,

@@ -37,15 +37,20 @@ const inlines = [
 ].map((m) => m[1] ?? "");
 const hashes = inlines.map(sha).join(" ");
 
+/* blob: is for the audio processor alone: metronome/engine.ts compiles it from a
+   Blob URL, and a worklet module is fetched under script-src, where blob: does
+   not match 'self'. Dropping it is silent — Chrome logs nothing for a refused
+   worklet module, so the app still renders and still counts bars, with no sound.
+   worker-src carries it too because Safari's worklet accounting is untested here. */
 const policy = [
   "default-src 'self'",
-  `script-src 'self' ${hashes}`,
+  `script-src 'self' blob: ${hashes}`,
   "style-src 'self'",
   "img-src 'self' data:",
   "font-src 'self'",
   "connect-src 'self'",
   "manifest-src 'self'",
-  "worker-src 'self'",
+  "worker-src 'self' blob:",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
@@ -53,6 +58,10 @@ const policy = [
 ].join("; ");
 
 const headers = readFileSync(resolve(DIST, "..", "_headers"), "utf8");
+if (!headers.includes("@CSP@")) {
+  console.error("the @CSP@ placeholder was not found in _headers");
+  process.exit(1);
+}
 writeFileSync(join(DIST, "_headers"), headers.replace("@CSP@", policy));
 console.log(
   `inlined the theme boot and hashed ${inlines.length} inline scripts`,

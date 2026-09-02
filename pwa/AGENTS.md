@@ -61,6 +61,12 @@ each file does; this file is the rules an agent gets wrong.
 - **Every inline `<script>` needs a CSP hash.** `inline.mjs` hashes what it
   finds in the compiled `dist/index.html`. Add an inline script and rebuild —
   never hand-write a hash.
+- **A script the page builds at runtime needs its scheme in `script-src`.** An
+  `AudioWorklet` or `Worker` loaded from `URL.createObjectURL` is fetched under
+  `script-src`, where `blob:` does not match `'self'` — which is why the policy
+  names it. Chrome logs nothing for a refused worklet module, so the app boots,
+  renders and counts, and only the sound is missing. Widen the policy only for a
+  scheme the tree actually uses, and assert the behaviour, not the silence.
 
 **Known property, not a bug:** TypeScript 7 removed `alwaysStrict: false`, so
 `register.ts` and `theme-boot.ts` carry a `"use strict"` prologue the

@@ -36,6 +36,22 @@ export async function harness(options: Parameters<typeof startServer>[0] = {}) {
       await page.emulateMediaFeatures([
         { name: "prefers-color-scheme", value: "light" },
       ]);
+      /* Pinned to a silent sink for the same reason: a Chrome with no reachable
+         audio device stalls the context clock after one render quantum, and the
+         transport reports nothing but that clock, so every timing assertion
+         would read zero on such a machine and pass. */
+      await page.evaluateOnNewDocument(() => {
+        const Base = window.AudioContext;
+        type SilentSink = { setSinkId?(sink: { type: "none" }): Promise<void> };
+        window.AudioContext = class extends Base {
+          constructor(options?: AudioContextOptions) {
+            super(options);
+            void (this as AudioContext & SilentSink)
+              .setSinkId?.({ type: "none" })
+              .catch(() => {});
+          }
+        };
+      });
       page.errors = [];
       page.on("pageerror", (e) =>
         page.errors.push(e instanceof Error ? e.message : String(e)),
