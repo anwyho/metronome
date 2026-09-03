@@ -10,12 +10,15 @@ type TestPage = Awaited<ReturnType<Harness["page"]>>;
 const HEIGHTS = [553, 629, 667, 745, 812];
 const WIDTH = 390;
 
-/* The four shapes this ships to. The insets are the part no browser here can
-   produce: zero in a tab, tens of pixels in an installed window, and it was the
-   installed one that came out wrong — the panel showed under the first page and
-   the chevron sat on the transport. The heights are the visible viewport, so
-   the Safari rows are the device short its toolbars. */
+/* The shapes this ships to, smallest first — the 13 mini is the tightest screen
+   still in service and the Pro Max the roomiest. The insets are the part no
+   browser here can produce: zero in a tab, tens of pixels in an installed
+   window, and it was the installed one that came out wrong — the panel showed
+   under the first page and the chevron sat on the transport. The heights are
+   the visible viewport, so the Safari rows are the device short its toolbars. */
 const DEVICES = [
+  { name: "13 mini, Safari", width: 375, height: 629, top: 0, bottom: 0 },
+  { name: "13 mini, installed", width: 375, height: 812, top: 50, bottom: 34 },
   { name: "iPhone 17, Safari", width: 402, height: 696, top: 0, bottom: 0 },
   {
     name: "iPhone 17, installed",
