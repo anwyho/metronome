@@ -1,8 +1,10 @@
 import { h } from "../../vendor/preact.module.js";
+import { useRef } from "../../vendor/hooks.module.js";
 import { LEVEL_NAME } from "../../metronome/pattern.js";
 import type { Pattern } from "../../metronome/pattern.js";
 import type { Actions } from "../../metronome/store.js";
-import type { GridMetrics } from "../layout.js";
+import { gridMetrics } from "../layout.js";
+import { useViewport } from "../hooks/useViewport.js";
 import { HoldButton } from "./HoldButton.js";
 
 /* Twenty-two beats separate the ends of the range, so a hold crosses it in
@@ -12,17 +14,21 @@ const BEATS_PER_SECOND = 12;
 export function BeatGrid({
   beats,
   current,
-  metrics,
   actions,
 }: {
   beats: Pattern;
   current: number;
-  metrics: GridMetrics;
   actions: Actions;
 }) {
+  /* The box is whatever the column has left after the tempo and the transport
+     take theirs, so it is measured rather than predicted. */
+  const box = useRef<HTMLDivElement>(null);
+  const { vw, vh } = useViewport(box);
+  const metrics = gridMetrics(vw, vh, beats.length);
+
   return (
     <section class="beats">
-      <div class="grid" style={{ "--grid-height": metrics.height + "px" }}>
+      <div class="grid" ref={box}>
         <div
           class="grid__inner"
           style={{

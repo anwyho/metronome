@@ -189,11 +189,17 @@ cover the frame's trip to the screen; without it the dot lights behind the click
 
 The beat grid box is **one height per viewport, whatever the beat count** — the
 cells shrink inside it. Sizing the box to its rows slides the tempo and the
-transport under the finger as beats are added. The reserve constants in
-`ui/layout.ts` are measured from the laid-out screen; re-measure them if the
-layout changes. They were wrong once and pushed the settings chevron off the
-bottom of a small phone. `tests/layout.test.ts` measures geometry rather than
-diffing screenshots, because a measurement says which element moved.
+transport under the finger as beats are added. CSS sizes that box: the grid is
+the flex item that takes what the column has left, clamped to two rows at full
+size, and `ui/layout.ts` turns the measured box into cells. An earlier version
+predicted the box from hardcoded reserves and got them wrong, pushing the
+settings chevron off the bottom of a small phone. `tests/layout.test.ts`
+measures geometry rather than diffing screenshots, because a measurement says
+which element moved.
+
+The settings chevron is sticky, not part of either page, so the way down and the
+way back are the same button in the same place. It is the only thing on screen
+that says there is a second page, so it never scrolls away.
 
 The swing name slot always holds a line box, blank or not. The row aligns on the
 baseline, and an absent name lets the heading ride up, shifting everything below

@@ -2,12 +2,11 @@ import { h } from "../vendor/preact.module.js";
 import { useRef } from "../vendor/hooks.module.js";
 import type { Store } from "../metronome/store.js";
 import { BeatGrid } from "./components/BeatGrid.js";
+import { PanelChevron } from "./components/PanelChevron.js";
 import { SettingsPanel } from "./components/SettingsPanel.js";
 import { TempoControl } from "./components/TempoControl.js";
 import { Transport } from "./components/Transport.js";
 import { useStore } from "./hooks/useStore.js";
-import { useViewport } from "./hooks/useViewport.js";
-import { gridMetrics } from "./layout.js";
 import { currentBeat } from "../metronome/store.js";
 
 /* Sections take the whole `actions` bag because they drive several of them;
@@ -15,7 +14,6 @@ import { currentBeat } from "../metronome/store.js";
 export function App({ store }: { store: Store }) {
   const state = useStore(store);
   const shell = useRef<HTMLDivElement>(null);
-  const { vw, vh } = useViewport(shell);
 
   if (state.unsupported) {
     return (
@@ -25,19 +23,12 @@ export function App({ store }: { store: Store }) {
     );
   }
 
-  const metrics = gridMetrics(vw, vh, state.beats.length);
-  /* The panel is the second scroll-snap page, so the chevron scrolls to it
-     rather than toggling anything. */
-  const toPanel = () =>
-    shell.current?.scrollTo({ top: shell.current.scrollHeight });
-
   return (
     <div class="shell" ref={shell}>
       <div class="main">
         <BeatGrid
           beats={state.beats}
           current={currentBeat(state)}
-          metrics={metrics}
           actions={store.actions}
         />
         <TempoControl
@@ -52,11 +43,9 @@ export function App({ store }: { store: Store }) {
           countIn={state.countIn}
           actions={store.actions}
         />
-        <button class="chevron" aria-label="More settings" onClick={toPanel}>
-          ⌄
-        </button>
       </div>
       <SettingsPanel state={state} actions={store.actions} />
+      <PanelChevron shell={shell} />
     </div>
   );
 }

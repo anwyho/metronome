@@ -5,9 +5,9 @@ import { harness, rectOf, rectOfText, settle } from "../helpers/app.js";
 type Harness = Awaited<ReturnType<typeof harness>>;
 type TestPage = Awaited<ReturnType<Harness["page"]>>;
 
-/* 629 is a mini with both Safari toolbars showing, and is the height that
-   breaks; the rest are the common iPhone viewports. */
-const HEIGHTS = [629, 667, 745, 812];
+/* 553 is an SE and 629 a mini, both with the Safari toolbars showing; the rest
+   are the common iPhone viewports. 629 is the height that broke once. */
+const HEIGHTS = [553, 629, 667, 745, 812];
 const WIDTH = 390;
 
 const pattern = (n: number) => "X" + "o".repeat(n - 1);
@@ -90,6 +90,47 @@ describe("layout", () => {
     });
   }
 
+  it("keeps the chevron on screen and turns it around at the panel", async () => {
+    const page = await open(667);
+    const state = () =>
+      page.evaluate(() => {
+        const shell = document.querySelector(".shell")!;
+        const chevron = document.querySelector(".chevron")!;
+        const box = chevron.getBoundingClientRect();
+        return {
+          label: chevron.getAttribute("aria-label"),
+          /* Sticky, so it is in the same place on both pages — give or take
+             the fraction of a pixel the scroll height rounds away. */
+          bottom: Math.round(box.bottom),
+          turned: getComputedStyle(chevron.querySelector("svg")!).transform,
+          scrollTop: Math.round(shell.scrollTop),
+        };
+      });
+
+    const closed = await state();
+    assert.equal(closed.label, "More settings");
+    assert.equal(closed.scrollTop, 0);
+
+    await page.click(".chevron");
+    await settle(page, 40);
+    const opened = await state();
+    assert.equal(opened.label, "Back to the metronome");
+    assert.ok(opened.scrollTop > 0, "the press scrolled to the panel");
+    assert.ok(
+      Math.abs(opened.bottom - closed.bottom) <= 1,
+      `the chevron moved from ${closed.bottom} to ${opened.bottom}`,
+    );
+    assert.notEqual(opened.turned, closed.turned, "the chevron did not flip");
+
+    /* The way back is the same press. */
+    await page.click(".chevron");
+    await settle(page, 40);
+    const { bottom, ...back } = await state();
+    const { bottom: was, ...first } = closed;
+    assert.deepEqual(back, first);
+    await page.close();
+  });
+
   it("puts the panel beside the transport once there is room", async () => {
     const page = await h.page();
     await page.setViewport({ width: 1100, height: 800, deviceScaleFactor: 2 });
@@ -106,9 +147,13 @@ describe("layout", () => {
         /* Nothing below to scroll to, so the affordance that scrolls there has
            no business being on screen. */
         chevron: getComputedStyle(chevron).display,
+        /* The column is content-sized here, so a grid that only takes what is
+           left over takes nothing and the beats collapse to a rash of dots.
+           Laid-out width, not the drawn one — a cell is still scaling in. */
+        cell: document.querySelector<HTMLElement>(".cell")!.offsetWidth,
       };
     });
-    assert.deepEqual(side, { beside: true, chevron: "none" });
+    assert.deepEqual(side, { beside: true, chevron: "none", cell: 56 });
     await page.close();
   });
 
