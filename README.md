@@ -201,6 +201,13 @@ The settings chevron is sticky, not part of either page, so the way down and the
 way back are the same button in the same place. It is the only thing on screen
 that says there is a second page, so it never scrolls away.
 
+The safe-area insets are zero in every browser a test can drive and tens of
+pixels in an installed window, so the installed case is the one that breaks: the
+first page has to be **100% of the scrollport plus its bottom pad**, or the panel
+shows under it, and the column has to clear that pad as well as the chevron.
+`--inset-top`/`--inset-bottom` exist so `tests/layout.test.ts` can stand in for a
+device.
+
 The swing name slot always holds a line box, blank or not. The row aligns on the
 baseline, and an absent name lets the heading ride up, shifting everything below
 it — which reads as the volume track changing thickness.

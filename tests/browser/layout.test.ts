@@ -10,6 +10,30 @@ type TestPage = Awaited<ReturnType<Harness["page"]>>;
 const HEIGHTS = [553, 629, 667, 745, 812];
 const WIDTH = 390;
 
+/* The four shapes this ships to. The insets are the part no browser here can
+   produce: zero in a tab, tens of pixels in an installed window, and it was the
+   installed one that came out wrong — the panel showed under the first page and
+   the chevron sat on the transport. The heights are the visible viewport, so
+   the Safari rows are the device short its toolbars. */
+const DEVICES = [
+  { name: "iPhone 17, Safari", width: 402, height: 696, top: 0, bottom: 0 },
+  {
+    name: "iPhone 17, installed",
+    width: 402,
+    height: 874,
+    top: 62,
+    bottom: 34,
+  },
+  { name: "17 Pro Max, Safari", width: 440, height: 778, top: 0, bottom: 0 },
+  {
+    name: "17 Pro Max, installed",
+    width: 440,
+    height: 956,
+    top: 62,
+    bottom: 34,
+  },
+];
+
 const pattern = (n: number) => "X" + "o".repeat(n - 1);
 
 describe("layout", () => {
@@ -38,6 +62,67 @@ describe("layout", () => {
       n,
     );
     await settle(page);
+  }
+
+  for (const device of DEVICES) {
+    it(`clears the safe areas on a ${device.name}`, async () => {
+      const page = await h.page();
+      await page.setViewport({
+        width: device.width,
+        height: device.height,
+        deviceScaleFactor: 3,
+      });
+      await page.goto(h.server.url, { waitUntil: "domcontentloaded" });
+      await page.waitForFunction(() => /beats/.test(document.body.innerText));
+      await page.evaluate(
+        (top, bottom) => {
+          const shell = document.querySelector<HTMLElement>(".shell")!;
+          shell.style.setProperty("--inset-top", top + "px");
+          shell.style.setProperty("--inset-bottom", bottom + "px");
+        },
+        device.top,
+        device.bottom,
+      );
+      await settle(page);
+
+      for (const n of [2, 6, 12, 24]) {
+        await setBeats(page, n);
+        const at = await page.evaluate(() => {
+          const top = (s: string) =>
+            document.querySelector(s)!.getBoundingClientRect().top;
+          const bottom = (s: string) =>
+            document.querySelector(s)!.getBoundingClientRect().bottom;
+          return {
+            panel: top(".panel"),
+            grid: top(".grid"),
+            start: bottom(".start"),
+            chevronTop: top(".chevron"),
+            chevronBottom: bottom(".chevron"),
+            cell: document.querySelector<HTMLElement>(".cell")!.offsetWidth,
+          };
+        });
+        const where = `${device.name}, ${n} beats`;
+
+        assert.ok(
+          at.panel >= device.height - 0.5,
+          `${where}: the panel showed ${device.height - at.panel}px of itself on the first page`,
+        );
+        assert.ok(
+          at.grid >= device.top,
+          `${where}: the grid ran under the status bar`,
+        );
+        assert.ok(
+          at.chevronBottom <= device.height - device.bottom + 0.5,
+          `${where}: the chevron ran into the home indicator`,
+        );
+        assert.ok(
+          at.start <= at.chevronTop,
+          `${where}: the chevron sat on the transport`,
+        );
+        assert.ok(at.cell >= 24, `${where}: the beats shrank to ${at.cell}px`);
+      }
+      await page.close();
+    });
   }
 
   it("never moves the tempo or the transport as beats are added", async () => {

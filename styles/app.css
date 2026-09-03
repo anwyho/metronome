@@ -8,9 +8,15 @@
 .shell {
   /* The insets are the whole reason for the top and bottom pads: in a tab the
      browser's own chrome already holds the content clear, and a fixed reserve
-     for a status bar that is not there is a band of dead screen. */
-  --shell-top: max(env(safe-area-inset-top), var(--space-4));
-  --shell-bottom: max(env(safe-area-inset-bottom), var(--space-3));
+     for a status bar that is not there is a band of dead screen.
+
+     Read into properties of their own so a test can stand in for a device.
+     They are zero in every browser a test can open and tens of pixels in an
+     installed window, and it is the second case the layout gets wrong. */
+  --inset-top: env(safe-area-inset-top);
+  --inset-bottom: env(safe-area-inset-bottom);
+  --shell-top: max(var(--inset-top), var(--space-4));
+  --shell-bottom: max(var(--inset-bottom), var(--space-3));
   --chevron-size: 44px;
 
   height: 100%;
@@ -29,9 +35,14 @@
 
 .main {
   scroll-snap-align: start;
-  min-height: 100%;
-  /* The chevron floats over this edge, so the column stops short of it. */
-  padding-bottom: calc(var(--chevron-size) + var(--space-2));
+  /* The bottom pad is inside the scrollport, so a first page that is only 100%
+     of it stops short of the screen and leaves the panel showing under it. */
+  min-height: calc(100% + var(--shell-bottom));
+  /* The chevron floats at the foot of the scrollport, which is above that same
+     pad — so the column stops short of both. */
+  padding-bottom: calc(
+    var(--shell-bottom) + var(--chevron-size) + var(--space-2)
+  );
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
